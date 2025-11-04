@@ -57,7 +57,7 @@ export default function TicketCard({ ticket }: TicketCardProps) {
         </DialogContent>
       </Dialog>
 
-      <Card className="group overflow-hidden border-b-2 border-b-black/50 bg-white p-0 transition-all hover:shadow-lg">
+      <Card className="group overflow-hidden border-b-2 border-b-black/50 bg-gray-300/30 p-0 transition-all hover:shadow-lg">
         {/* Event Banner Image */}
         <div className="relative h-64 overflow-hidden">
           <Image

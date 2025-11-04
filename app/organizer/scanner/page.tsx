@@ -65,7 +65,7 @@ export default function ScannerPage() {
             )}
 
             {/* Manual Scan Button */}
-            <Button onClick={handleScan} className="gradient-primary w-full text-white" size="lg">
+            <Button onClick={handleScan} className="bg-[#ff7c07] hover:bg-[#e66f06] w-full text-white" size="lg">
               Simulate Scan
             </Button>
 

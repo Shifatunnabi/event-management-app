@@ -103,9 +103,9 @@ export default function Home() {
       </section>
 
       <div className="bg-gray-200/30">
-        <div className="container mx-auto px-4 py-8">
+        {/* <div className="container mx-auto px-4 py-8">
           <Advertisement />
-        </div>
+        </div> */}
 
         <WhyEventGhor />
       </div>

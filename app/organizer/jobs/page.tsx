@@ -30,7 +30,7 @@ export default function JobsBoardPage() {
           </div>
           
           <div className="mb-4 text-center ">
-            <Button onClick={() => setCreateModalOpen(true)} className="gradient-primary text-white w-full">
+            <Button onClick={() => setCreateModalOpen(true)} className="bg-[#ff7c07] hover:bg-[#e66f06] text-white w-full">
               <Plus className="mr-2 h-4 w-4" />
               Post New Job
             </Button>

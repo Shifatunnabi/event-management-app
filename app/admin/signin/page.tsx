@@ -39,7 +39,7 @@ export default function AdminSignInPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 bg-[#ff7c07] hover:bg-[#e66f06] rounded-full flex items-center justify-center">
               <Shield className="w-8 h-8 text-white" />
             </div>
           </div>
@@ -71,7 +71,7 @@ export default function AdminSignInPage() {
               />
             </div>
             {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</div>}
-            <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-blue-600" disabled={loading}>
+            <Button type="submit" className="w-full bg-[#ff7c07] hover:bg-[#e66f06]" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
             <p className="text-xs text-center text-muted-foreground mt-4">

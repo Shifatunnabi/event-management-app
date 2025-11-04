@@ -15,7 +15,7 @@ export default function EventCard({ event }: EventCardProps) {
 
   return (
     <Link href={`/events/${event.id}`}>
-      <div className="group overflow-hidden transition-all hover:shadow-lg border-b-2 border-b-black/50 bg-white rounded-lg">
+      <div className="group overflow-hidden transition-all hover:shadow-lg border-b-2 border-b-black/50 bg-gray-300/30 rounded-lg">
         <div className="relative h-64 overflow-hidden">
           <Image
             src={event.image || "/placeholder.svg"}

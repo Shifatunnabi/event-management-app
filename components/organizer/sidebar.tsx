@@ -66,7 +66,7 @@ export default function OrganizerSidebar({ isOpen = true, onClose }: OrganizerSi
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors whitespace-nowrap",
                     isActive
-                      ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white"
+                      ? "bg-[#ff7c07] hover:bg-[#e66f06] text-white"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground",
                   )}
                 >
