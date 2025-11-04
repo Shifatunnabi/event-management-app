@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { events } from "@/data/events"
+import AdPlaceholder from "@/components/ui/ad-placeholder"
 
 export async function generateStaticParams() {
   return events.map((event) => ({
@@ -22,7 +23,7 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
   }
 
   const formattedDate = new Date(event.date).toLocaleDateString("en-US", {
-    weekday: "long",
+    
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -34,64 +35,83 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 py-8">
+      {/* Hero Image */}
+      <div className="py-8">
         <div className="relative h-[200px] w-full overflow-hidden rounded-2xl md:h-[300px] lg:h-[400px]">
           <Image src={event.image || "/placeholder.svg"} alt={event.title} fill className="object-cover" priority />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="mb-4 text-2xl font-bold lg:text-4xl">{event.title}</h1>
+      {/* Main Content */}
+      <div className="py-4">
+        <div className="grid gap-6 lg:grid-cols-5">
+          {/* Left Side - Event Info and CTA (3 columns) */}
+          <div className="lg:col-span-3">
+            <div className="mb-6">
+              <h1 className="mb-4 text-2xl font-bold lg:text-4xl">{event.title}</h1>
 
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Calendar className="h-5 w-5 text-purple-600" />
-              <span className="font-medium">{formattedDate}</span>
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Calendar className="h-4 w-4 text-[#ff7c07]" />
+                  <span className="text-sm">{formattedDate}</span>
+                </div>
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <MapPin className="h-4 w-4 text-[#ff7c07]" />
+                  <span className="text-sm">{event.location}</span>
+                </div>
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Users className="h-4 w-4 text-[#ff7c07]" />
+                  <span className="text-sm">{event.attendees.toLocaleString()} attending</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <MapPin className="h-5 w-5 text-purple-600" />
-              <span className="font-medium">{event.location}</span>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-wrap gap-3">
+              {isPremium ? (
+                <Button size="lg" className="bg-[#ff7c07] hover:bg-[#e66f06] text-white">
+                  <Ticket className="mr-2 h-5 w-5" />
+                  Buy Ticket - ${event.price}
+                </Button>
+              ) : (
+                <>
+                  <Button size="lg" className="bg-[#ff7c07] hover:bg-[#e66f06] text-white">
+                    <Heart className="mr-2 h-5 w-5" />
+                    Interested
+                  </Button>
+                  <Button size="lg" variant="outline">
+                    <Users className="mr-2 h-5 w-5" />
+                    Going
+                  </Button>
+                </>
+              )}
+              <Button size="lg" variant="outline">
+                <Share2 className="mr-2 h-5 w-5" />
+                Share
+              </Button>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Users className="h-5 w-5 text-purple-600" />
-              <span className="font-medium">Organized by {event.organizer}</span>
-            </div>
+          </div>
+
+          {/* Right Side - Small Ad Space (2 columns) */}
+          <div className="lg:col-span-2 flex justify-center lg:justify-end">
+            <AdPlaceholder 
+              width={450} 
+              height={150} 
+              title="Premium Ad Space"
+              className="max-w-full"
+            />
           </div>
         </div>
 
-        {/* CTA Buttons */}
-        <div className="mb-8 flex flex-wrap gap-3">
-          {isPremium ? (
-            <Button size="lg" className="bg-[#ff7c07] hover:bg-[#e66f06] text-white">
-              <Ticket className="mr-2 h-5 w-5" />
-              Buy Ticket - ${event.price}
-            </Button>
-          ) : (
-            <>
-              <Button size="lg" className="bg-[#ff7c07] hover:bg-[#e66f06] text-white">
-                <Heart className="mr-2 h-5 w-5" />
-                Interested
-              </Button>
-              <Button size="lg" variant="outline">
-                <Users className="mr-2 h-5 w-5" />
-                Going
-              </Button>
-            </>
-          )}
-          <Button size="lg" variant="outline">
-            <Share2 className="mr-2 h-5 w-5" />
-            Share
-          </Button>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-5">
-          {/* Left Side - Description (3 columns) with scroll */}
+        {/* Second Row - Event Description and Details */}
+        <div className="grid gap-6 lg:grid-cols-5 mt-12">
+          {/* Left Side - Event Description (3 columns) */}
           <div className="lg:col-span-3">
             <Card className="h-full">
               <CardContent className="flex h-full max-h-[600px] flex-col p-6">
                 <h2 className="mb-4 text-2xl font-bold">About This Event</h2>
+                
                 <div className="prose hide-scrollbar max-w-none overflow-y-auto pr-2">
                   <p className="mb-4 text-muted-foreground">{event.description}</p>
                   <p className="mb-4 text-muted-foreground">
@@ -116,15 +136,17 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
             </Card>
           </div>
 
+          {/* Right Side - Event Details with Interactive Map (2 columns) */}
           <div className="lg:col-span-2">
-            <Card className="h-full max-h-[600px]">
+            <Card className="h-full">
               <CardContent className="p-6">
                 <h2 className="mb-4 text-xl font-bold">Event Details</h2>
 
                 <div className="space-y-4">
+                  {/* Date & Time */}
                   <div>
                     <div className="mb-1 flex items-center gap-2 text-sm font-medium">
-                      <Calendar className="h-4 w-4 text-purple-600" />
+                      <Calendar className="h-4 w-4 text-[#ff7c07]" />
                       Date & Time
                     </div>
                     <p className="text-sm text-muted-foreground">{formattedDate}</p>
@@ -133,19 +155,10 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
 
                   <Separator />
 
+                  {/* Organizer */}
                   <div>
                     <div className="mb-1 flex items-center gap-2 text-sm font-medium">
-                      <MapPin className="h-4 w-4 text-purple-600" />
-                      Location
-                    </div>
-                    <p className="text-sm text-muted-foreground">{event.location}</p>
-                  </div>
-
-                  <Separator />
-
-                  <div>
-                    <div className="mb-1 flex items-center gap-2 text-sm font-medium">
-                      <Users className="h-4 w-4 text-purple-600" />
+                      <Users className="h-4 w-4 text-[#ff7c07]" />
                       Organizer
                     </div>
                     <p className="text-sm text-muted-foreground">{event.organizer}</p>
@@ -153,57 +166,49 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
 
                   <Separator />
 
-                  <div>
-                    <div className="mb-1 text-sm font-medium">Category</div>
-                    <Badge variant="secondary">{event.category}</Badge>
-                  </div>
-
-                  <Separator />
-
+                  {/* Location */}
                   <div>
                     <div className="mb-1 flex items-center gap-2 text-sm font-medium">
-                      <Users className="h-4 w-4 text-purple-600" />
-                      Attendees
+                      <MapPin className="h-4 w-4 text-[#ff7c07]" />
+                      Location
                     </div>
-                    <p className="text-sm text-muted-foreground">{event.attendees.toLocaleString()} people attending</p>
+                    <p className="text-sm text-muted-foreground mb-3">{event.location}</p>
+                    
+                    {/* Interactive Map */}
+                    <div className="overflow-hidden rounded-lg bg-muted border border-border">
+                      <iframe
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d193595.91476818218!2d-74.11976314071885!3d40.69766374874431!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY%2C%20USA!5e0!3m2!1sen!2sus!4v1699000000000"
+                        width="100%"
+                        height="200"
+                        style={{ border: 0 }}
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title="Event Location Map"
+                      />
+                    </div>
+                    
+                    <Button size="sm" className="mt-2 w-full border border-black hover:bg-white hover:text-black">
+                      <MapPin className="mr-2 h-4 w-4" />
+                      Get Directions
+                    </Button>
                   </div>
-
-                  <Separator />
-
-                  <div>
-                    <div className="mb-1 text-sm font-medium">Price</div>
-                    <p className="text-2xl font-bold text-purple-600">
-                      {event.price === "Free" ? "Free Entry" : `$${event.price}`}
-                    </p>
-                  </div>
+                 
+                  
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
 
+        {/* Full Width Ad Space */}
         <div className="mt-12">
-          <h2 className="mb-6 text-center text-2xl font-bold lg:text-3xl">Venue Location</h2>
-
-          <div className="overflow-hidden rounded-2xl bg-muted border border-black/30">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3875.5906537057!2d100.56415431483!3d13.746780990356!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30e29ed269b534f3%3A0x9a5012ba7a3e3c1!2sBangkok%2C%20Thailand!5e0!3m2!1sen!2sus!4v1234567890"
-              width="100%"
-              height="400"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="Event Location Map"
-            />
-          </div>
-
-          <div className="mt-6 flex justify-center">
-            <Button size="lg" variant="outline" className="bg-black text-white">
-              <MapPin className="mr-2 h-5 w-5" />
-              Get Directions
-            </Button>
-          </div>
+          <AdPlaceholder 
+            size="banner"
+            height={200}
+            title="Large Banner Ad Space"
+            className="w-full"
+          />
         </div>
       </div>
     </div>

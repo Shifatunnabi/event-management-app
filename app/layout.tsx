@@ -6,13 +6,14 @@ import Header from "@/components/layout/header"
 import Footer from "@/components/layout/footer"
 import MobileNav from "@/components/layout/mobile-nav"
 import AppLoader from "@/components/app-loader"
+import LayoutWrapper from "@/components/layout/layout-wrapper"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "EventGhor - Discover & Create Amazing Events",
-  description: "Your premier event management and ticketing platform",
-    generator: 'v0.app'
+  title: "EventGhor ",
+  description: "A premier event management and ticketing platform",
+    generator: 'MarcoPolo Digital'
 }
 
 export default function RootLayout({
@@ -25,7 +26,9 @@ export default function RootLayout({
       <body className={`${inter.className} bg-white`}>
         <AppLoader>
           <Header />
-          <main className="min-h-screen pt-20 pb-20 md:pb-0 bg-white">{children}</main>
+          <main className="min-h-screen pt-20 pb-20 md:pb-0 bg-white">
+            <LayoutWrapper>{children}</LayoutWrapper>
+          </main>
           <Footer />
           <MobileNav />
         </AppLoader>

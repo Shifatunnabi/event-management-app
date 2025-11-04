@@ -6,7 +6,7 @@ export default function GeometricLoader() {
       <style jsx>{`
         .loader {
           --path: #2f3545;
-          --dot: #5628ee;
+          --dot: #ff7c07;
           --duration: 3s;
           position: relative;
         }

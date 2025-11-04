@@ -28,7 +28,7 @@ export default function MobileNav() {
               href={item.href}
               className={cn(
                 "flex flex-col items-center gap-1 px-3 py-2 text-xs transition-colors",
-                isActive ? "text-purple-600" : "text-gray-600 hover:text-gray-900",
+                isActive ? "text-[#ff7c07]" : "text-gray-600 hover:text-gray-900",
               )}
             >
               <Icon className="h-5 w-5" />

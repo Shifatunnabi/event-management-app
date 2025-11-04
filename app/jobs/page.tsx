@@ -33,7 +33,7 @@ export default function JobsPage() {
   return (
     <>
       <div className="min-h-screen">
-        <div className="container mx-auto px-4 py-8">
+        <div className="py-8">
           {/* Header */}
           <div className="mb-8">
             <h1 className="mb-2 text-center text-4xl font-bold">Job Portal</h1>

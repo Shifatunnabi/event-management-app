@@ -14,7 +14,9 @@ import OrganizerCTA from "@/components/organizer-cta"
 import Advertisement from "@/components/home/advertisement"
 import SearchBar from "@/components/home/search-bar"
 import EventFilters from "@/components/home/event-filters"
+import BreakoutSection from "@/components/layout/breakout-section"
 import { useState, useMemo } from "react"
+import AdPlaceholder from "@/components/ui/ad-placeholder"
 
 export default function Home() {
   const [selectedFilter, setSelectedFilter] = useState<"all" | "active" | "finished">("active")
@@ -46,7 +48,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-8">
+      <section className="py-8">
         <div className="flex flex-col gap-4 lg:grid lg:grid-cols-4">
           {/* Hero Slider - full width on mobile, 3 cols on desktop */}
           <div className="h-[200px] md:h-[250px] lg:h-[400px] lg:col-span-3">
@@ -61,12 +63,12 @@ export default function Home() {
       </section>
 
       {/* Categories Section */}
-      <section className="py-8 bg-black/10 overflow-hidden">
+      <BreakoutSection className="py-8 bg-black/10 overflow-hidden">
         <CategoryBadges />
-      </section>
+      </BreakoutSection>
 
       {/* Upcoming Events Section */}
-      <section className="container mx-auto px-4 py-12">
+      <section className="py-12">
         <h2 className="mb-4 text-center text-3xl font-bold">Explore Upcoming Events</h2>
         <p className="mb-8 text-center text-md text-black/60">Explore all the events at one place</p>
 
@@ -102,19 +104,29 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="bg-gray-200/30">
+       {/* Full Width Ad Space */}
+      <div className="mb-12">
+        <AdPlaceholder 
+          size="banner"
+          height={200}
+          title="Premium Ad Space"
+          className="w-full"
+        />
+      </div>
+
+      <BreakoutSection className="bg-gray-200/30">
         {/* <div className="container mx-auto px-4 py-8">
           <Advertisement />
         </div> */}
 
         <WhyEventGhor />
-      </div>
+      </BreakoutSection>
 
       {/* FAQ Section */}
       <FAQSection />
 
       {/*Organizer CTA Section*/}
-      <div className="container mx-auto px-4 py-8">
+      <div className="py-8">
         <OrganizerCTA />
       </div>
     </div>

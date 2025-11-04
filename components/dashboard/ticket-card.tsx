@@ -76,7 +76,7 @@ export default function TicketCard({ ticket }: TicketCardProps) {
           {/* Date, Location, and Details section */}
           <div className="flex gap-3">
             {/* Date box on the left */}
-            <div className="w-16 flex-shrink-0 rounded-lg bg-[#ff7c07] p-3 text-center text-white">
+            <div className="w-16 shrink-0 rounded-lg bg-[#ff7c07] p-3 border-2 border-black text-center text-black">
               <div className="text-2xl font-bold leading-none">{day}</div>
               <div className="mt-1 text-xs uppercase">{month}</div>
             </div>
@@ -84,11 +84,11 @@ export default function TicketCard({ ticket }: TicketCardProps) {
             {/* Location and Details on the right */}
             <div className="flex-1 space-y-2 text-sm">
               <div className="flex items-start gap-2 text-gray-600">
-                <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
                 <span className="line-clamp-1">{ticket.eventLocation}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-600">
-                <QrCode className="h-4 w-4 flex-shrink-0 text-green-600" />
+                <QrCode className="h-4 w-4 shrink-0 text-green-600" />
                 <span className="line-clamp-1">Ticket ID: {ticket.id}</span>
               </div>
             </div>
@@ -109,7 +109,7 @@ export default function TicketCard({ ticket }: TicketCardProps) {
 
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
-            <Button onClick={() => setShowQR(true)} className="flex-1 bg-[#ff7c07] hover:bg-[#e66f06]">
+            <Button onClick={() => setShowQR(true)} className="flex-1 bg-black hover:bg-white hover:text-black">
               <QrCode className="mr-2 h-4 w-4" />
               View Ticket
             </Button>

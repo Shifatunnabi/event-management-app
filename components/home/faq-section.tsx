@@ -6,7 +6,7 @@ import { faqs } from "@/data/faqs"
 
 export default function FAQSection() {
   return (
-    <section className="container mx-auto px-4 py-16">
+    <section className="py-16">
       <h2 className="mb-12 text-center text-3xl font-bold">Frequently Asked Questions</h2>
 
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 items-start">

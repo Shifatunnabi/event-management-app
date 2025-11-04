@@ -6,8 +6,10 @@ const APP_NAME = "EventGhor"
 export default function Footer() {
   return (
     <footer className="bg-black text-white">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid gap-8 md:grid-cols-4">
+      <div className="w-full lg:grid lg:grid-cols-16 lg:gap-0">
+        <div className="col-span-2 lg:block hidden"></div>
+        <div className="col-span-12 px-4 lg:px-4 sm:px-6 py-12">
+          <div className="grid gap-8 md:grid-cols-4">
           {/* About */}
           <div>
             <h3 className="mb-4 text-lg font-semibold">{APP_NAME}</h3>
@@ -91,9 +93,11 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 border-t border-white/20 pt-8 text-center text-sm text-white/70">
-          <p>&copy; 2025 {APP_NAME}. All rights reserved.</p>
+          <div className="mt-8 border-t border-white/20 pt-8 text-center text-sm text-white/70">
+            <p>&copy; 2025 {APP_NAME}. All rights reserved.</p>
+          </div>
         </div>
+        <div className="col-span-2 lg:block hidden"></div>
       </div>
     </footer>
   )

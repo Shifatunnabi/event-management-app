@@ -41,30 +41,75 @@ const features = [
 
 export default function WhyEventGhor() {
   return (
-    <section className="container mx-auto px-4 py-16">
-      <div className="mb-12 text-center">
-        <h2 className="mb-4 text-3xl font-bold md:text-4xl">Why EventGhor?</h2>
-        <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-          Discover the features that make EventGhor the perfect platform for all your event needs
-        </p>
-      </div>
+    <section className="py-16">
+      {/* Content wrapper that follows the grid system */}
+      <div className="w-full">
+        {/* Mobile and Tablet: Full width with padding */}
+        <div className="lg:hidden px-4 sm:px-6">
+          <div className="mb-12 text-center">
+            <h2 className="mb-4 text-3xl font-bold md:text-4xl">Why EventGhor?</h2>
+            <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+              Discover the features that make EventGhor the perfect platform for you.
+            </p>
+          </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {features.map((feature, index) => {
-          const Icon = feature.icon
-          return (
-            <div
-              key={index}
-              className="group rounded-2xl border border-border bg-card p-8 transition-all hover:border-primary/50 hover:shadow-lg"
-            >
-              <div className="mx-auto mb-6 flex w-fit rounded-xl bg-primary/10 p-4">
-                <Icon className="h-8 w-8 text-primary" />
+          <div className="grid gap-6 sm:grid-cols-2">
+            {features.map((feature, index) => {
+              const Icon = feature.icon
+              return (
+                <div
+                  key={index}
+                  className="group rounded-2xl border border-border bg-card p-8 transition-all hover:border-primary/50 hover:shadow-lg"
+                >
+                  <div className="mx-auto mb-6 flex w-fit rounded-xl bg-primary/10 p-4">
+                    <Icon className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="mb-3 text-center text-xl font-semibold">{feature.title}</h3>
+                  <p className="text-center text-muted-foreground leading-relaxed">{feature.description}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+        
+        {/* Desktop and larger: 16-grid system with 2 empty grids on each side */}
+        <div className="hidden lg:block w-full">
+          <div className="lg:grid lg:grid-cols-16 lg:gap-0 w-full">
+            {/* Left empty space - 2 grids */}
+            <div className="col-span-2"></div>
+            
+            {/* Main content - 12 grids */}
+            <div className="col-span-12 px-4">
+              <div className="mb-12 text-center">
+                <h2 className="mb-4 text-3xl font-bold md:text-4xl">Why EventGhor?</h2>
+                <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+                  Discover the features that make EventGhor the perfect platform for all your event needs
+                </p>
               </div>
-              <h3 className="mb-3 text-center text-xl font-semibold">{feature.title}</h3>
-              <p className="text-center text-muted-foreground leading-relaxed">{feature.description}</p>
+
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {features.map((feature, index) => {
+                  const Icon = feature.icon
+                  return (
+                    <div
+                      key={index}
+                      className="group rounded-2xl border border-border bg-card p-8 transition-all hover:border-primary/50 hover:shadow-lg"
+                    >
+                      <div className="mx-auto mb-6 flex w-fit rounded-xl bg-primary/10 p-4">
+                        <Icon className="h-8 w-8 text-primary" />
+                      </div>
+                      <h3 className="mb-3 text-center text-xl font-semibold">{feature.title}</h3>
+                      <p className="text-center text-muted-foreground leading-relaxed">{feature.description}</p>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
-          )
-        })}
+            
+            {/* Right empty space - 2 grids */}
+            <div className="col-span-2"></div>
+          </div>
+        </div>
       </div>
     </section>
   )

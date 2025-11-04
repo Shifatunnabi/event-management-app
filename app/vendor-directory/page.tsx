@@ -25,7 +25,7 @@ export default function VendorDirectoryPage() {
   return (
     <>
       <div className="min-h-screen">
-        <div className="container mx-auto max-w-7xl px-4 py-8 md:px-8">
+        <div className="py-8">
           {/* Header */}
           <div className="mb-8 flex flex-col items-center justify-between gap-4 md:flex-row">
             <div className="flex-1 text-center">
