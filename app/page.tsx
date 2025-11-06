@@ -6,7 +6,6 @@ import CategoryBadges from "@/components/home/category-badges"
 import EventCard from "@/components/home/event-card"
 import FAQSection from "@/components/home/faq-section"
 import WhyEventGhor from "@/components/home/why-eventghor"
-import { events } from "@/data/events"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
@@ -15,11 +14,47 @@ import Advertisement from "@/components/home/advertisement"
 import SearchBar from "@/components/home/search-bar"
 import EventFilters from "@/components/home/event-filters"
 import BreakoutSection from "@/components/layout/breakout-section"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import AdPlaceholder from "@/components/ui/ad-placeholder"
+
+interface Event {
+  id: string
+  title: string
+  image: string
+  date: string
+  location: string
+  price: number | "Free"
+  category: string
+  organizer: string
+  description: string
+  attendees: number
+  isFeatured?: boolean
+}
 
 export default function Home() {
   const [selectedFilter, setSelectedFilter] = useState<"all" | "active" | "finished">("active")
+  const [events, setEvents] = useState<Event[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setIsLoading(true)
+        const response = await fetch("/api/events?upcoming=true&limit=15")
+        const data = await response.json()
+
+        if (data.success) {
+          setEvents(data.events)
+        }
+      } catch (error) {
+        console.error("Error fetching events:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchEvents()
+  }, [])
 
   const filteredEvents = useMemo(() => {
     const today = new Date()
@@ -31,19 +66,19 @@ export default function Home() {
       return events.filter((event) => new Date(event.date) < today)
     }
     return events
-  }, [selectedFilter])
+  }, [selectedFilter, events])
 
   const activeCount = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     return events.filter((event) => new Date(event.date) >= today).length
-  }, [])
+  }, [events])
 
   const finishedCount = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     return events.filter((event) => new Date(event.date) < today).length
-  }, [])
+  }, [events])
 
   return (
     <div className="min-h-screen">
@@ -85,11 +120,21 @@ export default function Home() {
           />
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredEvents.slice(0, 18).map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-lg text-muted-foreground">Loading events...</p>
+          </div>
+        ) : filteredEvents.length > 0 ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredEvents.slice(0, 15).map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-lg text-muted-foreground">No upcoming events found</p>
+          </div>
+        )}
 
         <div className="mt-12 flex justify-center">
           <Link href="/events">

@@ -1,18 +1,74 @@
 "use client"
 
-import { useState } from "react"
-import { Search, Plus } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, Plus, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import VendorCard from "@/components/vendor/vendor-card"
 import ApplyFeatureModal from "@/components/vendor/apply-feature-modal"
-import { vendors, vendorCategories } from "@/data/vendors"
+import { useToast } from "@/hooks/use-toast"
+
+interface Vendor {
+  _id: string
+  name: string
+  photo?: string
+  serviceName: string
+  category: string
+  phone: string
+  email: string
+  location: string
+  priceRange: string
+  organizationName?: string
+  services: string[]
+  description: string
+  workLinks: { label: string; url: string }[]
+  portfolioImages: string[]
+}
+
+const vendorCategories = [
+  "All Categories",
+  "Catering",
+  "Photography",
+  "Decoration",
+  "Audio/Visual",
+  "Entertainment",
+  "Planning",
+  "Others",
+]
 
 export default function VendorDirectoryPage() {
+  const { toast } = useToast()
+  const [vendors, setVendors] = useState<Vendor[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All Categories")
   const [applyModalOpen, setApplyModalOpen] = useState(false)
   const [expandedVendorId, setExpandedVendorId] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchVendors()
+  }, [])
+
+  const fetchVendors = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/vendors/apply")
+      const data = await response.json()
+
+      if (data.success) {
+        setVendors(data.vendors)
+      }
+    } catch (error) {
+      console.error("Error fetching vendors:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load vendors",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const filteredVendors = vendors.filter((vendor) => {
     const matchesSearch =
@@ -66,26 +122,36 @@ export default function VendorDirectoryPage() {
             </div>
           </div>
 
-          <div className="space-y-4">
-            {filteredVendors.length > 0 ? (
-              filteredVendors.map((vendor) => (
-                <VendorCard
-                  key={vendor.id}
-                  vendor={vendor}
-                  isExpanded={expandedVendorId === vendor.id}
-                  onToggle={(id) => setExpandedVendorId(expandedVendorId === id ? null : id)}
-                />
-              ))
-            ) : (
-              <div className="py-12 text-center">
-                <p className="text-muted-foreground">No vendors found matching your criteria</p>
-              </div>
-            )}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredVendors.length > 0 ? (
+                filteredVendors.map((vendor) => (
+                  <VendorCard
+                    key={vendor._id}
+                    vendor={vendor}
+                    isExpanded={expandedVendorId === vendor._id}
+                    onToggle={(id) => setExpandedVendorId(expandedVendorId === id ? null : id)}
+                  />
+                ))
+              ) : (
+                <div className="py-12 text-center">
+                  <p className="text-muted-foreground">
+                    {vendors.length === 0
+                      ? "No vendors available at the moment. Be the first to apply!"
+                      : "No vendors found matching your criteria"}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      <ApplyFeatureModal open={applyModalOpen} onOpenChange={setApplyModalOpen} />
+      <ApplyFeatureModal open={applyModalOpen} onOpenChange={setApplyModalOpen} onSuccess={fetchVendors} />
     </>
   )
 }

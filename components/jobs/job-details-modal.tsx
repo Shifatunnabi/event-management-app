@@ -1,19 +1,24 @@
 "use client"
 
+import { useState } from "react"
 import { Calendar, MapPin, Clock, DollarSign, Users, Briefcase } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import JobApplicationModal from "./job-application-modal"
 import type { Job } from "@/data/jobs"
 
 interface JobDetailsModalProps {
   job: Job | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  onApplicationSuccess?: () => void
 }
 
-export default function JobDetailsModal({ job, open, onOpenChange }: JobDetailsModalProps) {
+export default function JobDetailsModal({ job, open, onOpenChange, onApplicationSuccess }: JobDetailsModalProps) {
+  const [applicationModalOpen, setApplicationModalOpen] = useState(false)
+  
   if (!job) return null
 
   const formattedDate = new Date(job.date).toLocaleDateString("en-US", {
@@ -28,6 +33,16 @@ export default function JobDetailsModal({ job, open, onOpenChange }: JobDetailsM
     day: "numeric",
     year: "numeric",
   })
+
+  const handleApplyClick = () => {
+    setApplicationModalOpen(true)
+  }
+
+  const handleApplicationSuccess = () => {
+    if (onApplicationSuccess) {
+      onApplicationSuccess()
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -110,7 +125,7 @@ export default function JobDetailsModal({ job, open, onOpenChange }: JobDetailsM
             <ul className="space-y-2">
               {job.requirements.map((req, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-purple-600" />
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-purple-600" />
                   <span>{req}</span>
                 </li>
               ))}
@@ -129,12 +144,21 @@ export default function JobDetailsModal({ job, open, onOpenChange }: JobDetailsM
           </div>
 
           {/* Apply Button */}
-          <Button className="gradient-primary w-full text-white" size="lg">
+          <Button className="bg-[#ff7c07] hover:bg-[#e66f06] w-full text-white" size="lg" onClick={handleApplyClick}>
             <Briefcase className="mr-2 h-5 w-5" />
             Apply for this Job
           </Button>
         </div>
       </DialogContent>
+
+      {/* Application Modal */}
+      <JobApplicationModal
+        jobId={job.id}
+        jobTitle={job.title}
+        open={applicationModalOpen}
+        onOpenChange={setApplicationModalOpen}
+        onSuccess={handleApplicationSuccess}
+      />
     </Dialog>
   )
 }

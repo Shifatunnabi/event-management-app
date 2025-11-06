@@ -2,8 +2,9 @@ import mongoose, { Schema, model, models, Document } from "mongoose"
 
 export interface IVendor extends Document {
   _id: string
-  userId: mongoose.Types.ObjectId
+  userId?: mongoose.Types.ObjectId
   name: string
+  photo?: string
   serviceName: string
   category: string
   
@@ -37,13 +38,14 @@ const VendorSchema = new Schema<IVendor>(
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
-      unique: true,
     },
     name: {
       type: String,
       required: [true, "Name is required"],
       trim: true,
+    },
+    photo: {
+      type: String,
     },
     serviceName: {
       type: String,

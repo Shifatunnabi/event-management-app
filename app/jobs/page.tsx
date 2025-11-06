@@ -1,12 +1,11 @@
 "use client"
 
-import { useState } from "react"
-import { Search } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import JobCard from "@/components/jobs/job-card"
 import JobDetailsModal from "@/components/jobs/job-details-modal"
-import { jobs } from "@/data/jobs"
 import type { Job } from "@/data/jobs"
 
 export default function JobsPage() {
@@ -14,20 +13,63 @@ export default function JobsPage() {
   const [selectedType, setSelectedType] = useState("All Types")
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   const jobTypes = ["All Types", "Freelance", "Contract", "Part-time", "Full-time"]
 
-  const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.eventName.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesType = selectedType === "All Types" || job.type === selectedType
-    return matchesSearch && matchesType
-  })
+  useEffect(() => {
+    fetchJobs()
+  }, [selectedType, searchQuery])
+
+  const fetchJobs = async () => {
+    try {
+      setIsLoading(true)
+      const params = new URLSearchParams()
+      if (selectedType !== "All Types") {
+        params.append("type", selectedType)
+      }
+      if (searchQuery) {
+        params.append("search", searchQuery)
+      }
+
+      const response = await fetch(`/api/jobs?${params.toString()}`)
+      const data = await response.json()
+
+      if (data.success) {
+        // Transform API data to match Job interface
+        const transformedJobs = data.jobs.map((job: any) => ({
+          id: job._id,
+          title: job.title,
+          eventName: job.eventName || "",
+          organizer: job.organizerName,
+          location: job.location,
+          date: job.date,
+          duration: job.duration,
+          salary: job.salary,
+          type: job.type,
+          description: job.description,
+          requirements: job.requirements || [],
+          applicants: job.applicants || 0,
+          postedDate: job.postedDate,
+        }))
+        setJobs(transformedJobs)
+      }
+    } catch (error) {
+      console.error("Error fetching jobs:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleViewDetails = (job: Job) => {
     setSelectedJob(job)
     setDetailsModalOpen(true)
+  }
+
+  const handleApplicationSuccess = () => {
+    // Refresh jobs to update applicant count
+    fetchJobs()
   }
 
   return (
@@ -71,8 +113,19 @@ export default function JobsPage() {
 
           {/* Jobs Grid */}
           <div className="grid gap-6 lg:grid-cols-2">
-            {filteredJobs.length > 0 ? (
-              filteredJobs.map((job) => <JobCard key={job.id} job={job} onViewDetails={handleViewDetails} />)
+            {isLoading ? (
+              <div className="col-span-full flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : jobs.length > 0 ? (
+              jobs.map((job) => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  onViewDetails={handleViewDetails}
+                  onApplicationSuccess={handleApplicationSuccess}
+                />
+              ))
             ) : (
               <div className="col-span-full py-12 text-center">
                 <p className="text-muted-foreground">No jobs found matching your criteria</p>
@@ -82,7 +135,12 @@ export default function JobsPage() {
         </div>
       </div>
 
-      <JobDetailsModal job={selectedJob} open={detailsModalOpen} onOpenChange={setDetailsModalOpen} />
+      <JobDetailsModal
+        job={selectedJob}
+        open={detailsModalOpen}
+        onOpenChange={setDetailsModalOpen}
+        onApplicationSuccess={handleApplicationSuccess}
+      />
     </>
   )
 }

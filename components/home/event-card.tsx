@@ -12,9 +12,12 @@ export default function EventCard({ event }: EventCardProps) {
   const eventDate = new Date(event.date)
   const day = eventDate.getDate()
   const month = eventDate.toLocaleDateString("en-US", { month: "short" })
+  
+  // Use slug if available, otherwise fall back to id
+  const eventLink = `/events/${event.slug || event.id}`
 
   return (
-    <Link href={`/events/${event.id}`}>
+    <Link href={eventLink}>
       <div className="group overflow-hidden transition-all hover:shadow-lg border-b-2 border-b-black/50 bg-gray-300/30 rounded-lg">
         <div className="relative h-64 overflow-hidden">
           <Image

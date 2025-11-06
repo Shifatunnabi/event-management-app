@@ -1,3 +1,6 @@
+"use client"
+
+import { use, useState, useEffect } from "react"
 import Image from "next/image"
 import { notFound } from "next/navigation"
 import { Calendar, MapPin, Users, Share2, Heart, Ticket } from "lucide-react"
@@ -5,33 +8,98 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { events } from "@/data/events"
 import AdPlaceholder from "@/components/ui/ad-placeholder"
+import ShareModal from "@/components/ui/share-modal"
 
-export async function generateStaticParams() {
-  return events.map((event) => ({
-    id: event.id,
-  }))
+interface Event {
+  id: string
+  slug: string
+  title: string
+  description: string
+  image: string
+  date: string
+  time: string
+  location: string
+  locationLink?: string
+  category: string
+  organizer: string
+  organizationName?: string
+  price: number | "Free"
+  ticketType: "FREE" | "PREMIUM"
+  hasTicketLimit: boolean
+  totalTickets?: number
+  ticketsSold: number
+  attendees: number
+  isFeatured: boolean
 }
 
-export default async function EventDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const event = events.find((e) => e.id === id)
+async function getEvent(slug: string): Promise<Event | null> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    const response = await fetch(`${baseUrl}/api/events/${slug}`, {
+      cache: "no-store",
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    const data = await response.json()
+    return data.success ? data.event : null
+  } catch (error) {
+    console.error("Error fetching event:", error)
+    return null
+  }
+}
+
+export default function EventDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params)
+  const [event, setEvent] = useState<Event | null>(null)
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
+  const [currentUrl, setCurrentUrl] = useState("")
+
+  useEffect(() => {
+    const fetchEvent = async () => {
+      const eventData = await getEvent(resolvedParams.id)
+      if (eventData) {
+        setEvent(eventData)
+        setCurrentUrl(window.location.href)
+      }
+    }
+    fetchEvent()
+  }, [resolvedParams.id])
 
   if (!event) {
-    notFound()
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg text-muted-foreground">Loading event...</p>
+      </div>
+    )
   }
 
   const formattedDate = new Date(event.date).toLocaleDateString("en-US", {
-    
     month: "long",
     day: "numeric",
     year: "numeric",
   })
 
-  const formattedTime = "7:00 PM - 11:00 PM"
+  const isPremium = event.ticketType === "PREMIUM"
 
-  const isPremium = event.price !== "Free"
+  // Convert Google Maps share link to embed link
+  const getEmbedUrl = (locationLink?: string) => {
+    if (!locationLink) return null
+
+    try {
+      // Extract location from Google Maps share link
+      // Example: https://maps.app.goo.gl/g99CghapApba4Dut1
+      // or https://www.google.com/maps/place/...
+      return `https://www.google.com/maps?q=${encodeURIComponent(locationLink)}&output=embed`
+    } catch {
+      return null
+    }
+  }
+
+  const embedMapUrl = getEmbedUrl(event.locationLink)
 
   return (
     <div className="min-h-screen bg-white">
@@ -86,7 +154,11 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
                   </Button>
                 </>
               )}
-              <Button size="lg" variant="outline">
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => setIsShareModalOpen(true)}
+              >
                 <Share2 className="mr-2 h-5 w-5" />
                 Share
               </Button>
@@ -104,6 +176,14 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
           </div>
         </div>
 
+        {/* Share Modal */}
+        <ShareModal
+          open={isShareModalOpen}
+          onOpenChange={setIsShareModalOpen}
+          url={currentUrl}
+          title={event.title}
+        />
+
         {/* Second Row - Event Description and Details */}
         <div className="grid gap-6 lg:grid-cols-5 mt-12">
           {/* Left Side - Event Description (3 columns) */}
@@ -113,24 +193,10 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
                 <h2 className="mb-4 text-2xl font-bold">About This Event</h2>
                 
                 <div className="prose hide-scrollbar max-w-none overflow-y-auto pr-2">
-                  <p className="mb-4 text-muted-foreground">{event.description}</p>
-                  <p className="mb-4 text-muted-foreground">
-                    Join us for an unforgettable experience at {event.title}. This event promises to deliver exceptional
-                    entertainment, networking opportunities, and memories that will last a lifetime.
-                  </p>
-                  <h3 className="mb-2 text-xl font-semibold">What to Expect</h3>
-                  <ul className="mb-4 list-inside list-disc space-y-2 text-muted-foreground">
-                    <li>World-class performances and entertainment</li>
-                    <li>Networking opportunities with industry professionals</li>
-                    <li>Food and beverage options available</li>
-                    <li>Exclusive merchandise and photo opportunities</li>
-                    <li>Safe and secure venue with professional staff</li>
-                  </ul>
-                  <h3 className="mb-2 text-xl font-semibold">Important Information</h3>
-                  <p className="mb-2 text-muted-foreground">
-                    Please arrive at least 30 minutes before the event starts. Tickets are non-refundable but
-                    transferable. Valid ID required for entry. Age restrictions may apply.
-                  </p>
+                  <div 
+                    className="text-muted-foreground"
+                    dangerouslySetInnerHTML={{ __html: event.description }}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -150,7 +216,7 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
                       Date & Time
                     </div>
                     <p className="text-sm text-muted-foreground">{formattedDate}</p>
-                    <p className="text-sm text-muted-foreground">{formattedTime}</p>
+                    <p className="text-sm text-muted-foreground">{event.time}</p>
                   </div>
 
                   <Separator />
@@ -161,7 +227,10 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
                       <Users className="h-4 w-4 text-[#ff7c07]" />
                       Organizer
                     </div>
-                    <p className="text-sm text-muted-foreground">{event.organizer}</p>
+                    <p className="text-sm font-semibold text-gray-900">{event.organizer}</p>
+                    {event.organizationName && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{event.organizationName}</p>
+                    )}
                   </div>
 
                   <Separator />
@@ -174,24 +243,34 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
                     </div>
                     <p className="text-sm text-muted-foreground mb-3">{event.location}</p>
                     
-                    {/* Interactive Map */}
-                    <div className="overflow-hidden rounded-lg bg-muted border border-border">
-                      <iframe
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d193595.91476818218!2d-74.11976314071885!3d40.69766374874431!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY%2C%20USA!5e0!3m2!1sen!2sus!4v1699000000000"
-                        width="100%"
-                        height="200"
-                        style={{ border: 0 }}
-                        allowFullScreen
-                        loading="lazy"
-                        referrerPolicy="no-referrer-when-downgrade"
-                        title="Event Location Map"
-                      />
-                    </div>
-                    
-                    <Button size="sm" className="mt-2 w-full border border-black hover:bg-white hover:text-black">
-                      <MapPin className="mr-2 h-4 w-4" />
-                      Get Directions
-                    </Button>
+                    {/* Interactive Map - only show if locationLink is provided */}
+                    {embedMapUrl && (
+                      <>
+                        <div className="overflow-hidden rounded-lg bg-muted border border-border">
+                          <iframe
+                            src={embedMapUrl}
+                            width="100%"
+                            height="200"
+                            style={{ border: 0 }}
+                            allowFullScreen
+                            loading="lazy"
+                            referrerPolicy="no-referrer-when-downgrade"
+                            title="Event Location Map"
+                          />
+                        </div>
+                        
+                        <Button 
+                          size="sm" 
+                          className="mt-2 w-full border border-black hover:bg-white hover:text-black"
+                          asChild
+                        >
+                          <a href={event.locationLink} target="_blank" rel="noopener noreferrer">
+                            <MapPin className="mr-2 h-4 w-4" />
+                            Get Directions
+                          </a>
+                        </Button>
+                      </>
+                    )}
                   </div>
                  
                   

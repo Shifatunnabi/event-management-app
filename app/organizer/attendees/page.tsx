@@ -1,140 +1,158 @@
 "use client"
 
-import { useState } from "react"
-import { Search, Download } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Search, Loader2, Calendar, MapPin, Users } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/hooks/use-toast"
 
-interface Attendee {
-  id: string
-  name: string
-  email: string
-  ticketType: string
-  purchaseDate: string
-  status: "Confirmed" | "Pending" | "Cancelled"
+interface Event {
+  _id: string
+  title: string
+  slug: string
+  date: string
+  time: string
+  location: string
+  interested: string[]
+  going: string[]
 }
 
-const attendees: Attendee[] = [
-  {
-    id: "A001",
-    name: "John Doe",
-    email: "john@example.com",
-    ticketType: "VIP",
-    purchaseDate: "2025-10-15",
-    status: "Confirmed",
-  },
-  {
-    id: "A002",
-    name: "Jane Smith",
-    email: "jane@example.com",
-    ticketType: "General",
-    purchaseDate: "2025-10-16",
-    status: "Confirmed",
-  },
-  {
-    id: "A003",
-    name: "Mike Johnson",
-    email: "mike@example.com",
-    ticketType: "VIP",
-    purchaseDate: "2025-10-17",
-    status: "Pending",
-  },
-  {
-    id: "A004",
-    name: "Sarah Williams",
-    email: "sarah@example.com",
-    ticketType: "General",
-    purchaseDate: "2025-10-18",
-    status: "Confirmed",
-  },
-  {
-    id: "A005",
-    name: "David Brown",
-    email: "david@example.com",
-    ticketType: "VIP",
-    purchaseDate: "2025-10-19",
-    status: "Cancelled",
-  },
-]
-
-export default function AttendeesPage() {
+export default function AttendeeManagementPage() {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [events, setEvents] = useState<Event[]>([])
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
 
-  const filteredAttendees = attendees.filter(
-    (attendee) =>
-      attendee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      attendee.email.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  useEffect(() => {
+    fetchEvents()
+  }, [])
+
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredEvents(events)
+    } else {
+      const filtered = events.filter((event) =>
+        event.title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      setFilteredEvents(filtered)
+    }
+  }, [searchQuery, events])
+
+  const fetchEvents = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/organizers/events")
+      const data = await response.json()
+
+      if (data.success) {
+        setEvents(data.events)
+        setFilteredEvents(data.events)
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load events",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleEventClick = (eventId: string) => {
+    router.push(`/organizer/organizer-event-details?eventId=${eventId}`)
+  }
+
+  const getTotalAttendees = (event: Event) => {
+    return (event.interested?.length || 0) + (event.going?.length || 0)
+  }
 
   return (
-    <div className="container mx-auto p-8">
+    <div className="container mx-auto max-w-6xl p-4 md:p-8">
+      {/* Header */}
       <div className="mb-8">
-        
-          <h1 className="mb-2 text-2xl md:text-4xl text-center font-bold">Attendee Management</h1>
-          <p className="text-muted-foreground text-center">Manage and track your event attendees</p>
-        
-        
+        <h1 className="mb-2 text-2xl md:text-4xl font-bold">Attendee Management</h1>
+        <p className="text-muted-foreground">Select an event to view attendee details</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Attendee List</CardTitle>
-          <div className="relative mt-4">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search attendees..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="pb-3 text-left text-sm font-medium text-muted-foreground">ID</th>
-                  <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Name</th>
-                  <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Email</th>
-                  <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Ticket Type</th>
-                  <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Purchase Date</th>
-                  <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAttendees.map((attendee) => (
-                  <tr key={attendee.id} className="border-b last:border-0">
-                    <td className="py-4 text-sm">{attendee.id}</td>
-                    <td className="py-4 text-sm font-medium">{attendee.name}</td>
-                    <td className="py-4 text-sm text-muted-foreground">{attendee.email}</td>
-                    <td className="py-4 text-sm">
-                      <Badge variant="secondary">{attendee.ticketType}</Badge>
-                    </td>
-                    <td className="py-4 text-sm text-muted-foreground">{attendee.purchaseDate}</td>
-                    <td className="py-4 text-sm">
-                      <Badge
-                        variant={
-                          attendee.status === "Confirmed"
-                            ? "default"
-                            : attendee.status === "Pending"
-                              ? "secondary"
-                              : "destructive"
-                        }
-                      >
-                        {attendee.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search events..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
+      {/* Events List */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : filteredEvents.length > 0 ? (
+        <div className="space-y-4">
+          {filteredEvents.map((event) => (
+            <Card
+              key={event._id}
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handleEventClick(event._id)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  {/* Date Badge */}
+                  <div className="shrink-0 bg-[#ff7c07] border-2 border-black rounded-lg p-3 text-center w-16">
+                    <div className="text-xl font-bold leading-none text-white">
+                      {new Date(event.date).getDate()}
+                    </div>
+                    <div className="text-xs font-bold uppercase mt-1 text-white">
+                      {new Date(event.date).toLocaleDateString("en-US", { month: "short" })}
+                    </div>
+                  </div>
+
+                  {/* Event Details */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-lg truncate mb-1">{event.title}</h3>
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>{new Date(event.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        <span className="truncate">{event.location}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        <span>{getTotalAttendees(event)} attendees</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20">
+          <p className="text-lg font-semibold text-muted-foreground mb-2">
+            {searchQuery ? "No events found" : "No events yet"}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {searchQuery
+              ? "Try adjusting your search"
+              : "Create your first event to get started"}
+          </p>
+        </div>
+      )}
     </div>
   )
 }
+

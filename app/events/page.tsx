@@ -1,19 +1,54 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import SearchBar from "@/components/home/search-bar"
 import EventFilters from "@/components/home/event-filters"
 import EventCard from "@/components/home/event-card"
-import { events } from "@/data/events"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import OrganizerCTA from "@/components/organizer-cta"
 
 const EVENTS_PER_PAGE = 9
 
+interface Event {
+  id: string
+  title: string
+  image: string
+  date: string
+  location: string
+  price: number | "Free"
+  category: string
+  organizer: string
+  description: string
+  attendees: number
+  isFeatured?: boolean
+}
+
 export default function EventsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedFilter, setSelectedFilter] = useState<"all" | "active" | "finished">("active")
+  const [events, setEvents] = useState<Event[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setIsLoading(true)
+        const response = await fetch("/api/events")
+        const data = await response.json()
+
+        if (data.success) {
+          setEvents(data.events)
+        }
+      } catch (error) {
+        console.error("Error fetching events:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchEvents()
+  }, [])
 
   const filteredEvents = useMemo(() => {
     const today = new Date()
@@ -25,19 +60,19 @@ export default function EventsPage() {
       return events.filter((event) => new Date(event.date) < today)
     }
     return events
-  }, [selectedFilter])
+  }, [selectedFilter, events])
 
   const activeCount = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     return events.filter((event) => new Date(event.date) >= today).length
-  }, [])
+  }, [events])
 
   const finishedCount = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     return events.filter((event) => new Date(event.date) < today).length
-  }, [])
+  }, [events])
 
   const totalPages = Math.ceil(filteredEvents.length / EVENTS_PER_PAGE)
   const startIndex = (currentPage - 1) * EVENTS_PER_PAGE
@@ -66,6 +101,14 @@ export default function EventsPage() {
     setCurrentPage(1)
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg text-muted-foreground">Loading events...</p>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen">
       <div className="py-8">
@@ -88,13 +131,24 @@ export default function EventsPage() {
         </div>
 
         {/* Events Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {currentEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
+        {currentEvents.length > 0 ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {currentEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20">
+            <p className="text-2xl font-semibold text-muted-foreground mb-2">No events available</p>
+            <p className="text-sm text-muted-foreground">
+              {selectedFilter === "active" && "There are no active events at the moment."}
+              {selectedFilter === "finished" && "There are no finished events."}
+              {selectedFilter === "all" && "There are no events available."}
+            </p>
+          </div>
+        )}
 
-        {totalPages > 1 && (
+        {totalPages > 1 && currentEvents.length > 0 && (
           <div className="mt-12 flex items-center justify-center gap-2">
             <Button
               variant="outline"

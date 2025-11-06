@@ -1,5 +1,6 @@
 export interface Event {
   id: string
+  slug?: string
   title: string
   image: string
   date: string
@@ -7,6 +8,7 @@ export interface Event {
   price: number | "Free"
   category: string
   organizer: string
+  organizationName?: string
   description: string
   attendees: number
   isFeatured?: boolean

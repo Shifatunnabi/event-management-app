@@ -12,25 +12,31 @@ export interface ITicketType {
 export interface IEvent extends Document {
   _id: string
   title: string
+  slug: string
   description: string
   image: string
   date: Date
   time: string
   location: string
+  locationLink?: string
   category: string
   organizerId: mongoose.Types.ObjectId
   organizerName: string
+  organizationName?: string
   
-  // Capacity management
-  hasCapacityLimit: boolean
-  totalCapacity: number | null
+  // Ticket information
+  ticketType: "FREE" | "PREMIUM"
+  ticketPrice?: number
+  hasTicketLimit: boolean
+  totalTickets?: number
   ticketsSold: number
   
-  // Ticket types
-  ticketTypes: ITicketType[]
+  // For free events - interested/going
+  interested: mongoose.Types.ObjectId[]
+  going: mongoose.Types.ObjectId[]
   
   // Status
-  status: "DRAFT" | "PUBLISHED" | "ONGOING" | "COMPLETED" | "CANCELLED"
+  status: "DRAFT" | "PUBLISHED" | "ONGOING" | "COMPLETED" | "CANCELLED" | "HIDDEN"
   isFeatured: boolean
   
   // Metadata
@@ -59,6 +65,13 @@ const EventSchema = new Schema<IEvent>(
       required: [true, "Title is required"],
       trim: true,
     },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+    },
     description: {
       type: String,
       required: [true, "Description is required"],
@@ -80,6 +93,10 @@ const EventSchema = new Schema<IEvent>(
       required: [true, "Location is required"],
       trim: true,
     },
+    locationLink: {
+      type: String,
+      trim: true,
+    },
     category: {
       type: String,
       required: [true, "Category is required"],
@@ -93,29 +110,46 @@ const EventSchema = new Schema<IEvent>(
       type: String,
       required: true,
     },
+    organizationName: {
+      type: String,
+    },
     
-    hasCapacityLimit: {
+    ticketType: {
+      type: String,
+      enum: ["FREE", "PREMIUM"],
+      required: true,
+      default: "FREE",
+    },
+    ticketPrice: {
+      type: Number,
+      min: 0,
+    },
+    hasTicketLimit: {
       type: Boolean,
       default: false,
     },
-    totalCapacity: {
+    totalTickets: {
       type: Number,
-      default: null,
+      min: 0,
     },
     ticketsSold: {
       type: Number,
       default: 0,
     },
     
-    ticketTypes: {
-      type: [TicketTypeSchema],
-      default: [],
-    },
+    interested: [{
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    }],
+    going: [{
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    }],
     
     status: {
       type: String,
-      enum: ["DRAFT", "PUBLISHED", "ONGOING", "COMPLETED", "CANCELLED"],
-      default: "DRAFT",
+      enum: ["DRAFT", "PUBLISHED", "ONGOING", "COMPLETED", "CANCELLED", "HIDDEN"],
+      default: "PUBLISHED",
     },
     isFeatured: {
       type: Boolean,
@@ -136,6 +170,7 @@ const EventSchema = new Schema<IEvent>(
 )
 
 // Indexes
+EventSchema.index({ slug: 1 }, { unique: true })
 EventSchema.index({ organizerId: 1, status: 1, date: 1 })
 EventSchema.index({ status: 1, date: 1 })
 EventSchema.index({ category: 1, date: 1 })
