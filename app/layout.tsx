@@ -7,6 +7,7 @@ import Footer from "@/components/layout/footer"
 import MobileNav from "@/components/layout/mobile-nav"
 import AppLoader from "@/components/app-loader"
 import LayoutWrapper from "@/components/layout/layout-wrapper"
+import { AuthProvider } from "@/components/auth/auth-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -24,14 +25,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-white`}>
-        <AppLoader>
-          <Header />
-          <main className="min-h-screen pt-20 pb-20 md:pb-0 bg-white">
-            <LayoutWrapper>{children}</LayoutWrapper>
-          </main>
-          <Footer />
-          <MobileNav />
-        </AppLoader>
+        <AuthProvider>
+          <AppLoader>
+            <Header />
+            <main className="min-h-screen pt-20 pb-20 md:pb-0 bg-white">
+              <LayoutWrapper>{children}</LayoutWrapper>
+            </main>
+            <Footer />
+            <MobileNav />
+          </AppLoader>
+        </AuthProvider>
       </body>
     </html>
   )

@@ -5,12 +5,20 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
+import { useSession } from "next-auth/react"
+import { UserDropdown } from "@/components/auth/user-dropdown"
+import { OrganizerDropdown } from "@/components/auth/organizer-dropdown"
+import { Settings } from "lucide-react"
 
 const APP_NAME = "EventGhor"
 
 export default function Header() {
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const { data: session, status } = useSession()
+
+  const isAuthenticated = status === "authenticated"
+  const user = session?.user
 
   useEffect(() => {
     const handleScroll = () => {
@@ -41,7 +49,7 @@ export default function Header() {
         )}
       >
         <nav className="flex items-center rounded-full border border-gray-200 bg-red-300/20 px-4 py-2 shadow-lg backdrop-blur-sm">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <Link href="/" className="flex h-10 items-center justify-center transition-transform hover:scale-110">
               <Image src="/eventghor-logo.png" alt="EventGhor" width={40} height={40} className="h-13 pb-1 w-auto" />
             </Link>
@@ -76,11 +84,40 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Create Event Button - Right */}
-          <div className="flex-shrink-0">
-            <Link href="/organizer/create-event">
-              <Button className="bg-[#ff7c07] hover:bg-[#e66f06] rounded-full text-sm text-white">Create Event</Button>
-            </Link>
+          {/* Auth Actions - Right */}
+          <div className="flex shrink-0 items-center gap-2">
+            {!isAuthenticated ? (
+              <>
+                <Link href="/auth/signin">
+                  <Button variant="ghost" className="rounded-full text-sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button className="bg-[#ff7c07] hover:bg-[#e66f06] rounded-full text-sm text-white">
+                    Register
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                {/* Super Admin Settings */}
+                {user?.role === "SUPER_ADMIN" && (
+                  <Link href="/admin/dashboard">
+                    <Button variant="ghost" size="icon" className="rounded-full" title="Admin Panel">
+                      <Settings className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                )}
+
+                {/* User Dropdown or Organizer Dropdown */}
+                {user?.role === "ORGANIZER" && user?.organizerStatus === "APPROVED" ? (
+                  <OrganizerDropdown userName={user.name || ""} organizationName={user.organizationName} />
+                ) : user?.role === "USER" || user?.role === "SUPER_ADMIN" ? (
+                  <UserDropdown userName={user.name || ""} />
+                ) : null}
+              </>
+            )}
           </div>
         </nav>
       </header>
@@ -97,10 +134,41 @@ export default function Header() {
             <Image src="/eventghor-logo.png" alt="EventGhor" width={40} height={40} className="h-10 w-auto" />
           </Link>
 
-          {/* Create Event Button */}
-          <Link href="/organizer/create-event">
-            <Button className="gradient-primary rounded-full text-sm text-white">Create Event</Button>
-          </Link>
+          {/* Auth Actions */}
+          <div className="flex shrink-0 items-center gap-2">
+            {!isAuthenticated ? (
+              <>
+                <Link href="/auth/signin">
+                  <Button variant="ghost" size="sm" className="rounded-full text-xs">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button className="bg-[#ff7c07] hover:bg-[#e66f06] rounded-full text-xs text-white" size="sm">
+                    Register
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                {/* Super Admin Settings */}
+                {user?.role === "SUPER_ADMIN" && (
+                  <Link href="/admin/dashboard">
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" title="Admin Panel">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                )}
+
+                {/* User Dropdown or Organizer Dropdown */}
+                {user?.role === "ORGANIZER" && user?.organizerStatus === "APPROVED" ? (
+                  <OrganizerDropdown userName={user.name || ""} organizationName={user.organizationName} />
+                ) : user?.role === "USER" || user?.role === "SUPER_ADMIN" ? (
+                  <UserDropdown userName={user.name || ""} />
+                ) : null}
+              </>
+            )}
+          </div>
         </div>
       </header>
     </>

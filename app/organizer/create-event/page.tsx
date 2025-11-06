@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Upload } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,20 +10,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { isAuthenticated } from "@/lib/auth"
 
 export default function CreateEventPage() {
   const router = useRouter()
   const [poster, setPoster] = useState<File | null>(null)
-  const [isChecking, setIsChecking] = useState(true)
-
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      router.push("/auth/signin")
-    } else {
-      setIsChecking(false)
-    }
-  }, [router])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -33,17 +23,6 @@ export default function CreateEventPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     console.log("[v0] Create Event submitted")
-  }
-
-  if (isChecking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-600 border-t-transparent"></div>
-          <p className="mt-4 text-muted-foreground">Checking authentication...</p>
-        </div>
-      </div>
-    )
   }
 
   return (

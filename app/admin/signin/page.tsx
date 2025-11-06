@@ -4,11 +4,11 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { adminLogin } from "@/lib/admin-auth"
 import { Shield } from "lucide-react"
 
 export default function AdminSignInPage() {
@@ -23,15 +23,35 @@ export default function AdminSignInPage() {
     setError("")
     setLoading(true)
 
-    const success = adminLogin(email, password)
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
 
-    if (success) {
-      router.push("/admin/dashboard")
-    } else {
-      setError("Invalid admin credentials")
+      if (result?.error) {
+        setError("Invalid credentials or not a super admin")
+      } else if (result?.ok) {
+        // Verify user is super admin
+        const response = await fetch("/api/auth/session")
+        const session = await response.json()
+        
+        if (session?.user?.role === "SUPER_ADMIN") {
+          router.push("/admin/dashboard")
+          router.refresh()
+        } else {
+          setError("Access denied. Super admin privileges required.")
+          // Sign out if not super admin
+          await fetch("/api/auth/signout", { method: "POST" })
+        }
+      }
+    } catch (err) {
+      setError("An error occurred during sign in")
+      console.error("Sign in error:", err)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
@@ -75,7 +95,7 @@ export default function AdminSignInPage() {
               {loading ? "Signing in..." : "Sign In"}
             </Button>
             <p className="text-xs text-center text-muted-foreground mt-4">
-              Demo credentials: admin@eventghor.com / admin123
+              For super admin access, use the credentials created via seed script
             </p>
           </form>
         </CardContent>

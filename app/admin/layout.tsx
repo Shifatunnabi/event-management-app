@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { isAdminAuthenticated } from "@/lib/admin-auth"
+import { useSession } from "next-auth/react"
 import { AdminSidebar } from "@/components/admin/sidebar"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -12,30 +12,30 @@ import { Button } from "@/components/ui/button"
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const { data: session, status } = useSession()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
-    const checkAuth = () => {
-      if (pathname === "/admin/signin") {
-        setIsLoading(false)
-        return
-      }
-
-      const authenticated = isAdminAuthenticated()
-      if (!authenticated) {
-        router.push("/admin/signin")
-      } else {
-        setIsAuthenticated(true)
-      }
-      setIsLoading(false)
+    if (pathname === "/admin/signin") {
+      return
     }
 
-    checkAuth()
-  }, [pathname, router])
+    // Check if user is authenticated and is super admin
+    if (status === "loading") return
 
-  if (isLoading) {
+    if (status === "unauthenticated" || !session?.user) {
+      router.push("/auth/signin")
+      return
+    }
+
+    if (session.user.role !== "SUPER_ADMIN") {
+      router.push("/")
+      return
+    }
+  }, [pathname, router, session, status])
+
+  // Show loading while checking authentication
+  if (pathname !== "/admin/signin" && status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -50,7 +50,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return <>{children}</>
   }
 
-  if (!isAuthenticated) {
+  // Don't render protected content until authenticated as super admin
+  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
     return null
   }
 

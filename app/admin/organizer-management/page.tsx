@@ -4,77 +4,88 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Calendar, Mail, Building, Search, MoreVertical } from "lucide-react"
-import { useState } from "react"
+import { Calendar, Mail, Building, Search, Eye, Phone, FileText, Users } from "lucide-react"
+import { useState, useEffect } from "react"
+import { toast } from "sonner"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
-const organizers = [
-  {
-    id: 1,
-    name: "John Smith",
-    email: "john@events.com",
-    company: "Smith Events",
-    events: 12,
-    joinDate: "2024-06-15",
-    status: "active",
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    email: "sarah@eventify.com",
-    company: "Eventify",
-    events: 8,
-    joinDate: "2024-07-20",
-    status: "active",
-  },
-  {
-    id: 3,
-    name: "Mike Brown",
-    email: "mike@celebrations.com",
-    company: "Brown Celebrations",
-    events: 15,
-    joinDate: "2024-05-10",
-    status: "active",
-  },
-  {
-    id: 4,
-    name: "Emily Davis",
-    email: "emily@gatherings.com",
-    company: "Gatherings Pro",
-    events: 6,
-    joinDate: "2024-08-05",
-    status: "active",
-  },
-  {
-    id: 5,
-    name: "Chris Wilson",
-    email: "chris@eventpro.com",
-    company: "EventPro Solutions",
-    events: 10,
-    joinDate: "2024-04-22",
-    status: "active",
-  },
-  {
-    id: 6,
-    name: "Lisa Anderson",
-    email: "lisa@celebrations.com",
-    company: "Anderson Events",
-    events: 4,
-    joinDate: "2024-09-12",
-    status: "active",
-  },
-]
+interface Organizer {
+  id: string
+  name: string
+  email: string
+  phone: string
+  address: string
+  organizationName?: string
+  nidNumber?: string
+  joinDate: string
+  eventCount: number
+}
+
+interface Stats {
+  totalOrganizers: number
+  pendingRequests: number
+  totalEvents: number
+}
 
 export default function OrganizerManagementPage() {
+  const [organizers, setOrganizers] = useState<Organizer[]>([])
+  const [stats, setStats] = useState<Stats>({
+    totalOrganizers: 0,
+    pendingRequests: 0,
+    totalEvents: 0,
+  })
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedOrganizer, setSelectedOrganizer] = useState<Organizer | null>(null)
+  const [detailsOpen, setDetailsOpen] = useState(false)
+
+  useEffect(() => {
+    fetchOrganizers()
+  }, [])
+
+  const fetchOrganizers = async () => {
+    try {
+      const response = await fetch("/api/admin/organizers/management")
+      if (!response.ok) throw new Error("Failed to fetch organizers")
+      
+      const data = await response.json()
+      setOrganizers(data.organizers)
+      setStats(data.stats)
+    } catch (error: any) {
+      toast.error(error.message || "Failed to load organizers")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const showDetails = (organizer: Organizer) => {
+    setSelectedOrganizer(organizer)
+    setDetailsOpen(true)
+  }
 
   const filteredOrganizers = organizers.filter(
     (org) =>
       org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      org.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      org.organizationName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       org.email.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const totalEvents = organizers.reduce((sum, org) => sum + org.events, 0)
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading organizers...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
@@ -90,10 +101,10 @@ export default function OrganizerManagementPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Total Organizers</p>
-                <p className="text-3xl font-bold">{organizers.length}</p>
+                <p className="text-3xl font-bold">{stats.totalOrganizers}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <Building className="w-6 h-6 text-blue-600" />
+                <Users className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </CardContent>
@@ -103,25 +114,25 @@ export default function OrganizerManagementPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Total Listed Events</p>
-                <p className="text-3xl font-bold">{totalEvents}</p>
+                <p className="text-sm text-muted-foreground mb-1">Pending Requests</p>
+                <p className="text-3xl font-bold">{stats.pendingRequests}</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                <FileText className="w-6 h-6 text-orange-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Total Events</p>
+                <p className="text-3xl font-bold">{stats.totalEvents}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
                 <Calendar className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Avg Events/Organizer</p>
-                <p className="text-3xl font-bold">{(totalEvents / organizers.length).toFixed(1)}</p>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-purple-600" />
               </div>
             </div>
           </CardContent>
@@ -146,43 +157,102 @@ export default function OrganizerManagementPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {filteredOrganizers.map((organizer) => (
-              <Card key={organizer.id} className="border-2">
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="space-y-2 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-semibold">{organizer.name}</h3>
-                        <Badge className="bg-green-600">{organizer.status}</Badge>
+            {filteredOrganizers.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                {searchTerm ? "No matching organizers found" : "No organizers yet"}
+              </p>
+            ) : (
+              filteredOrganizers.map((organizer) => (
+                <Card key={organizer.id} className="border-2">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-semibold">{organizer.name}</h3>
+                          <Badge className="bg-green-600">Active</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground font-medium flex items-center gap-1">
+                          <Building className="w-4 h-4" />
+                          {organizer.organizationName || "N/A"}
+                        </p>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Mail className="w-4 h-4" />
+                            {organizer.email}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Phone className="w-4 h-4" />
+                            {organizer.phone}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            Joined: {new Date(organizer.joinDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="pt-2">
+                          <Badge variant="secondary">{organizer.eventCount} Events Listed</Badge>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground font-medium flex items-center gap-1">
-                        <Building className="w-4 h-4" />
-                        {organizer.company}
-                      </p>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Mail className="w-4 h-4" />
-                          {organizer.email}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          Joined: {organizer.joinDate}
-                        </span>
-                      </div>
-                      <div className="pt-2">
-                        <Badge variant="secondary">{organizer.events} Events Listed</Badge>
-                      </div>
+                      <Button variant="outline" size="sm" onClick={() => showDetails(organizer)}>
+                        <Eye className="w-4 h-4 mr-2" />
+                        Details
+                      </Button>
                     </div>
-                    <Button variant="outline" size="icon">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Details Dialog */}
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Organizer Details</DialogTitle>
+            <DialogDescription>Complete information about the organizer</DialogDescription>
+          </DialogHeader>
+          {selectedOrganizer && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Name</p>
+                  <p className="text-base font-semibold">{selectedOrganizer.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Email</p>
+                  <p className="text-base">{selectedOrganizer.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                  <p className="text-base">{selectedOrganizer.phone}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Organization Name</p>
+                  <p className="text-base">{selectedOrganizer.organizationName || "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">NID Number</p>
+                  <p className="text-base">{selectedOrganizer.nidNumber || "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Join Date</p>
+                  <p className="text-base">{new Date(selectedOrganizer.joinDate).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Events</p>
+                  <p className="text-base font-semibold">{selectedOrganizer.eventCount}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-sm font-medium text-muted-foreground">Address</p>
+                  <p className="text-base">{selectedOrganizer.address}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

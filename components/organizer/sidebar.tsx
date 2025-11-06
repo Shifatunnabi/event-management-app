@@ -2,9 +2,9 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { signOut } from "next-auth/react"
 import { LayoutDashboard, PlusCircle, Users, QrCode, Briefcase, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { logout } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 
 const sidebarItems = [
@@ -24,9 +24,8 @@ export default function OrganizerSidebar({ isOpen = true, onClose }: OrganizerSi
   const pathname = usePathname()
   const router = useRouter()
 
-  const handleLogout = () => {
-    logout()
-    router.push("/auth/signin")
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/" })
   }
 
   const handleLinkClick = () => {
@@ -70,7 +69,7 @@ export default function OrganizerSidebar({ isOpen = true, onClose }: OrganizerSi
                       : "text-muted-foreground hover:bg-accent hover:text-foreground",
                   )}
                 >
-                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  <Icon className="h-5 w-5 shrink-0" />
                   <span>{item.label}</span>
                 </Link>
               )

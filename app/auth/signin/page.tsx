@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { login } from "@/lib/auth"
+import { signIn } from "next-auth/react"
 import { AlertCircle } from "lucide-react"
 
 export default function SignInPage() {
@@ -24,21 +24,35 @@ export default function SignInPage() {
     setError("")
     setLoading(true)
 
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
 
-    const success = login(email, password)
-
-    if (success) {
-      router.push("/organizer/create-event")
-    } else {
-      setError("Invalid email or password. Try admin@eventghor.com / admin123")
+      if (result?.error) {
+        if (result.error === "PENDING_APPROVAL") {
+          setError("Your organizer account is pending admin approval. Please wait for approval to login.")
+        } else if (result.error === "REJECTED") {
+          setError("Your organizer application was rejected. Please contact support.")
+        } else {
+          setError("Invalid email or password")
+        }
+        setLoading(false)
+      } else {
+        // Success - redirect to home
+        router.push("/")
+        router.refresh()
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.")
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-3xl font-bold">Welcome Back</CardTitle>
@@ -82,14 +96,14 @@ export default function SignInPage() {
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">
-              Demo credentials: admin@eventghor.com / admin123
+              New to EventGhor? Create an account to get started
             </div>
 
             <div className="text-center text-sm">
               Don't have an account?{" "}
-              <Link href="/auth/signup" className="font-semibold text-purple-600 hover:text-purple-700">
+              <Link href="/register" className="font-semibold text-[#ff7c07] hover:text-[#e66f06]">
                 Sign up
-              </Link>
+              </Link> 
             </div>
           </form>
         </CardContent>
