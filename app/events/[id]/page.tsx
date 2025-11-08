@@ -84,6 +84,9 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
   })
 
   const isPremium = event.ticketType === "PREMIUM"
+  
+  // Check if event is finished (event date is in the past)
+  const isEventFinished = new Date(event.date) < new Date(new Date().setHours(0, 0, 0, 0))
 
   // Convert Google Maps share link to embed link
   const getEmbedUrl = (locationLink?: string) => {
@@ -117,7 +120,14 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
           {/* Left Side - Event Info and CTA (3 columns) */}
           <div className="lg:col-span-3">
             <div className="mb-6">
-              <h1 className="mb-4 text-2xl font-bold lg:text-4xl">{event.title}</h1>
+              <div className="flex items-center gap-3 mb-4">
+                <h1 className="text-2xl font-bold lg:text-4xl">{event.title}</h1>
+                {isEventFinished && (
+                  <Badge variant="secondary" className="bg-gray-500 text-white">
+                    Event Finished
+                  </Badge>
+                )}
+              </div>
 
               <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-center gap-1 text-muted-foreground">
@@ -137,7 +147,11 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap gap-3">
-              {isPremium ? (
+              {isEventFinished ? (
+                <Button size="lg" disabled className="bg-gray-400 cursor-not-allowed">
+                  Event Finished
+                </Button>
+              ) : isPremium ? (
                 <Button size="lg" className="bg-[#ff7c07] hover:bg-[#e66f06] text-white">
                   <Ticket className="mr-2 h-5 w-5" />
                   Buy Ticket - ${event.price}

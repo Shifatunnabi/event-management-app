@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, UserCheck, Users, Store, FileText, ImageIcon, LogOut } from "lucide-react"
+import { LayoutDashboard, UserCheck, Users, Store, FileText, ImageIcon, LogOut, Calendar } from "lucide-react"
 import { adminLogout } from "@/lib/admin-auth"
 import { Button } from "@/components/ui/button"
 
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/organizer-approval", label: "Organizer Approval", icon: UserCheck },
   { href: "/admin/organizer-management", label: "Organizer Management", icon: Users },
+  { href: "/admin/event-management", label: "Event Management", icon: Calendar },
   { href: "/admin/vendor-management", label: "Vendor Directory", icon: Store },
   { href: "/admin/vendor-applications", label: "Vendor Applications", icon: FileText },
   { href: "/admin/featured-posters", label: "Featured Posters", icon: ImageIcon },
