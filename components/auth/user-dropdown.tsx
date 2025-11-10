@@ -44,15 +44,9 @@ export function UserDropdown({ userName }: UserDropdownProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/profile" className="cursor-pointer">
+          <Link href="/dashboard" className="cursor-pointer">
             <User className="mr-2 h-4 w-4" />
             View Profile
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard" className="cursor-pointer">
-            <Ticket className="mr-2 h-4 w-4" />
-            My Tickets
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

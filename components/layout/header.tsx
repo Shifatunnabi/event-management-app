@@ -77,11 +77,13 @@ export default function Header() {
                 Jobs
               </Button>
             </Link>
-            <Link href="/dashboard">
-              <Button variant="ghost" className="rounded-full text-sm">
-                My Events
-              </Button>
-            </Link>
+            {isAuthenticated && (
+              <Link href="/dashboard">
+                <Button variant="ghost" className="rounded-full text-sm">
+                  Profile
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Auth Actions - Right */}

@@ -2,19 +2,25 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Calendar, Briefcase, Users, LayoutDashboard } from "lucide-react"
+import { useSession } from "next-auth/react"
+import { Home, Calendar, Briefcase, Users, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export default function MobileNav() {
   const pathname = usePathname()
+  const { status } = useSession()
+  const isAuthenticated = status === "authenticated"
 
-  const navItems = [
+  const baseNavItems = [
     { href: "/", icon: Home, label: "Home" },
     { href: "/events", icon: Calendar, label: "Events" },
     { href: "/vendor-directory", icon: Users, label: "Vendors" },
     { href: "/jobs", icon: Briefcase, label: "Jobs" },
-    { href: "/dashboard", icon: LayoutDashboard, label: "My Events" },
   ]
+
+  const navItems = isAuthenticated
+    ? [...baseNavItems, { href: "/dashboard", icon: User, label: "Profile" }]
+    : baseNavItems
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white/95 backdrop-blur-sm lg:hidden">

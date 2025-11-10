@@ -39,14 +39,24 @@ interface ScanResult {
       name: string
       email: string
     }
-    event: {
+    event?: {
       title: string
       date: string
       time: string
       location: string
     }
+    correctEvent?: {
+      title: string
+      date: string
+      location: string
+    }
+    scannedEvent?: {
+      title: string
+    }
   }
   alreadyScanned?: boolean
+  wrongEvent?: boolean
+  wasWrongEvent?: boolean
 }
 
 interface Event {
@@ -300,7 +310,10 @@ export default function ScannerPage() {
       const data = await response.json()
 
       if (response.ok && data.success) {
-        setScanResult(data)
+        setScanResult({
+          ...data,
+          wasWrongEvent: data.wasWrongEvent,
+        })
         setStats((prev) => ({
           scanned: prev.scanned + 1,
           valid: prev.valid + 1,
@@ -312,6 +325,7 @@ export default function ScannerPage() {
           success: false,
           message: data.error || "Ticket validation failed",
           alreadyScanned: data.alreadyScanned,
+          wrongEvent: data.wrongEvent,
           ticket: data.ticket,
         })
         setStats((prev) => ({
@@ -322,7 +336,8 @@ export default function ScannerPage() {
         playSound(false)
       }
 
-      setTimeout(() => setScanResult(null), 5000)
+      // Show result longer for wrong event errors (8 seconds vs 5 seconds)
+      setTimeout(() => setScanResult(null), data.wrongEvent ? 8000 : 5000)
     } catch (error) {
       toast({
         title: "Validation Error",
@@ -451,8 +466,12 @@ export default function ScannerPage() {
               <div
                 className={`rounded-lg p-4 ${
                   scanResult.success
-                    ? "bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-100"
-                    : "bg-red-50 dark:bg-red-900/20 text-red-900 dark:text-red-100"
+                    ? scanResult.wasWrongEvent
+                      ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-900 dark:text-yellow-100 border-2 border-yellow-400"
+                      : "bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-100"
+                    : scanResult.wrongEvent
+                      ? "bg-orange-50 dark:bg-orange-900/20 text-orange-900 dark:text-orange-100 border-2 border-orange-400"
+                      : "bg-red-50 dark:bg-red-900/20 text-red-900 dark:text-red-100"
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -463,12 +482,42 @@ export default function ScannerPage() {
                   )}
                   <div className="flex-1">
                     <p className="font-semibold mb-1">{scanResult.message}</p>
+                    
+                    {/* Warning for previously wrong event scan */}
+                    {scanResult.wasWrongEvent && (
+                      <p className="text-sm mt-1 font-medium bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded">
+                        ⚠️ Note: This ticket was previously scanned at the wrong event. Now validated correctly.
+                      </p>
+                    )}
+                    
+                    {/* Already scanned status */}
                     {scanResult.alreadyScanned && (
                       <p className="text-sm mt-1 font-medium">
                         Status: Already Scanned Ticket
                       </p>
                     )}
-                    {scanResult.ticket && (
+                    
+                    {/* Wrong event details */}
+                    {scanResult.wrongEvent && scanResult.ticket && (
+                      <div className="text-sm mt-2 p-3 bg-orange-100 dark:bg-orange-900/40 rounded space-y-2">
+                        <p className="font-bold">⚠️ WRONG EVENT SCAN</p>
+                        <div className="space-y-1">
+                          <p><strong>This ticket is for:</strong></p>
+                          <div className="pl-4 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4" />
+                              <span>{scanResult.ticket.correctEvent?.title}</span>
+                            </div>
+                            <p className="text-xs">📍 {scanResult.ticket.correctEvent?.location}</p>
+                            <p className="text-xs">📅 {new Date(scanResult.ticket.correctEvent?.date || "").toLocaleDateString()}</p>
+                          </div>
+                          
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Valid ticket details */}
+                    {scanResult.ticket && !scanResult.wrongEvent && (
                       <div className="text-sm space-y-1 mt-2">
                         {scanResult.ticket.attendee?.name && (
                           <div className="flex items-center gap-2">

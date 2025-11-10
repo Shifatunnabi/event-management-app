@@ -70,15 +70,68 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // If eventId is provided, verify it matches
-    if (eventId && ticket.eventId._id.toString() !== eventId) {
+    // Check if ticket belongs to the correct event
+    const isCorrectEvent = ticket.eventId._id.toString() === eventId;
+
+    if (!isCorrectEvent) {
+      // Mark ticket as WRONG_EVENT (only if currently ACTIVE)
+      if (ticket.status === "ACTIVE") {
+        await Ticket.findByIdAndUpdate(ticket._id, {
+          status: "WRONG_EVENT",
+          $push: {
+            scanHistory: {
+              scannedAt: new Date(),
+              scannedBy: session.user.id,
+              scannedEventId: eventId,
+              scannedEventTitle: event.title,
+              isValidEvent: false,
+            },
+          },
+        });
+      } else {
+        // Just log the wrong event scan in history without changing status
+        await Ticket.findByIdAndUpdate(ticket._id, {
+          $push: {
+            scanHistory: {
+              scannedAt: new Date(),
+              scannedBy: session.user.id,
+              scannedEventId: eventId,
+              scannedEventTitle: event.title,
+              isValidEvent: false,
+            },
+          },
+        });
+      }
+
       return NextResponse.json(
-        { error: "Ticket does not belong to this event" },
+        {
+          success: false,
+          error: `Wrong event! This ticket is for "${ticket.eventTitle}"`,
+          wrongEvent: true,
+          ticket: {
+            id: ticket._id,
+            status: ticket.status,
+            ticketType: ticket.ticketType,
+            price: ticket.price,
+            attendee: {
+              name: ticket.userName,
+              email: ticket.userEmail,
+            },
+            correctEvent: {
+              title: ticket.eventTitle,
+              date: ticket.eventDate,
+              location: ticket.eventLocation,
+            },
+            scannedEvent: {
+              title: event.title,
+            },
+          },
+        },
         { status: 400 }
       );
     }
 
-    // Check if ticket is already scanned
+    // Check if ticket is already scanned (at the correct event)
     if (ticket.status === "SCANNED") {
       return NextResponse.json(
         {
@@ -89,6 +142,8 @@ export async function POST(req: NextRequest) {
             id: ticket._id,
             status: ticket.status,
             scannedAt: ticket.scannedAt,
+            ticketType: ticket.ticketType,
+            price: ticket.price,
             attendee: {
               name: ticket.userName,
               email: ticket.userEmail,
@@ -97,6 +152,12 @@ export async function POST(req: NextRequest) {
         },
         { status: 400 }
       );
+    }
+
+    // Check if ticket was previously scanned at wrong event but now at correct event
+    if (ticket.status === "WRONG_EVENT") {
+      // Allow scanning at correct event - this will change status to SCANNED
+      // Continue to the validation below
     }
 
     // Check if ticket is expired
@@ -146,7 +207,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update ticket status to SCANNED
+    // Update ticket status to SCANNED (works for ACTIVE or WRONG_EVENT status)
+    const wasWrongEvent = ticket.status === "WRONG_EVENT";
     const updatedTicket = await Ticket.findByIdAndUpdate(
       ticket._id,
       {
@@ -156,6 +218,9 @@ export async function POST(req: NextRequest) {
           scanHistory: {
             scannedAt: new Date(),
             scannedBy: session.user.id,
+            scannedEventId: eventId,
+            scannedEventTitle: event.title,
+            isValidEvent: true,
           },
         },
       },
@@ -164,7 +229,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Ticket validated successfully",
+      message: wasWrongEvent 
+        ? "Ticket validated successfully (previously scanned at wrong event)" 
+        : "Ticket validated successfully",
+      wasWrongEvent,
       ticket: {
         id: updatedTicket._id,
         status: updatedTicket.status,

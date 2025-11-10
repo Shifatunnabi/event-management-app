@@ -7,6 +7,7 @@ export interface IUser extends Document {
   phone: string
   address: string
   password: string
+  profileImage?: string
   role: "USER" | "ORGANIZER" | "SUPER_ADMIN"
   
   // Organizer-specific fields
@@ -47,6 +48,10 @@ const UserSchema = new Schema<IUser>(
       type: String,
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
+    },
+    profileImage: {
+      type: String,
+      trim: true,
     },
     role: {
       type: String,

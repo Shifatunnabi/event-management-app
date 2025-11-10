@@ -1,8 +1,12 @@
 import mongoose, { Schema, model, models, Document } from "mongoose"
+import "./Event" // Ensure Event model is registered
 
 export interface IScanHistory {
   scannedAt: Date
   scannedBy: mongoose.Types.ObjectId
+  scannedEventId?: mongoose.Types.ObjectId
+  scannedEventTitle?: string
+  isValidEvent: boolean
   location?: string
 }
 
@@ -28,7 +32,7 @@ export interface ITicket extends Document {
   qrSignature: string
   
   // Status
-  status: "ACTIVE" | "SCANNED" | "EXPIRED" | "CANCELLED"
+  status: "ACTIVE" | "SCANNED" | "WRONG_EVENT" | "EXPIRED" | "CANCELLED"
   
   // Scan tracking
   scannedAt?: Date
@@ -45,6 +49,9 @@ export interface ITicket extends Document {
 const ScanHistorySchema = new Schema<IScanHistory>({
   scannedAt: { type: Date, required: true },
   scannedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  scannedEventId: { type: Schema.Types.ObjectId, ref: "Event" },
+  scannedEventTitle: String,
+  isValidEvent: { type: Boolean, required: true },
   location: String,
 })
 
@@ -115,7 +122,7 @@ const TicketSchema = new Schema<ITicket>(
     
     status: {
       type: String,
-      enum: ["ACTIVE", "SCANNED", "EXPIRED", "CANCELLED"],
+      enum: ["ACTIVE", "SCANNED", "WRONG_EVENT", "EXPIRED", "CANCELLED"],
       default: "ACTIVE",
     },
     
