@@ -15,7 +15,7 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    // Check if user is authenticated and is an approved organizer or super admin
+    // Check if user is authenticated and is an approved organizer
     if (status === "loading") return
 
     if (status === "unauthenticated" || !session?.user) {
@@ -23,11 +23,12 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
       return
     }
 
-    // Allow access for SUPER_ADMIN or approved ORGANIZER
-    const isAdmin = session.user.role === "SUPER_ADMIN"
-    const isApprovedOrganizer = session.user.role === "ORGANIZER" && session.user.organizerStatus === "APPROVED"
+    if (session.user.role !== "ORGANIZER") {
+      router.push("/")
+      return
+    }
 
-    if (!isAdmin && !isApprovedOrganizer) {
+    if (session.user.organizerStatus !== "APPROVED") {
       router.push("/")
       return
     }
@@ -42,37 +43,25 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
     )
   }
 
-  // Don't render protected content until authenticated as approved organizer or super admin
-  if (!session?.user) {
-    return null
-  }
-
-  const isAdmin = session.user.role === "SUPER_ADMIN"
-  const isApprovedOrganizer = session.user.role === "ORGANIZER" && session.user.organizerStatus === "APPROVED"
-
-  if (!isAdmin && !isApprovedOrganizer) {
+  // Don't render protected content until authenticated as approved organizer
+  if (!session?.user || session.user.role !== "ORGANIZER" || session.user.organizerStatus !== "APPROVED") {
     return null
   }
 
   return (
     <div className="flex">
-      {/* Only show organizer sidebar and menu button for organizers, not for admins */}
-      {!isAdmin && (
-        <>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="fixed left-4 top-20 z-50 lg:hidden"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            <Menu className="h-6 w-6" />
-          </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed left-4 top-20 z-50 lg:hidden"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+      >
+        <Menu className="h-6 w-6" />
+      </Button>
 
-          <OrganizerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        </>
-      )}
+      <OrganizerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main className={`min-h-screen w-full ${!isAdmin ? 'lg:ml-64 lg:pr-64' : ''}`}>{children}</main>
+      <main className="min-h-screen w-full lg:ml-64 lg:pr-64">{children}</main>
     </div>
   )
 }

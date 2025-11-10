@@ -3,15 +3,13 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
-import { LayoutDashboard, PlusCircle, Users, QrCode, Briefcase, LogOut, Calendar } from "lucide-react"
+import { LayoutDashboard, PlusCircle, Users, QrCode, Briefcase, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@radix-ui/react-separator"
 
 const sidebarItems = [
   { href: "/organizer/dashboard", icon: LayoutDashboard, label: "Dashboard Overview" },
   { href: "/organizer/create-event", icon: PlusCircle, label: "Create Event" },
-  { href: "/organizer/events", icon: Calendar, label: "Event Management" },
   { href: "/organizer/attendees", icon: Users, label: "Attendee Management" },
   { href: "/organizer/scanner", icon: QrCode, label: "Ticket Scanner" },
   { href: "/organizer/jobs", icon: Briefcase, label: "Jobs Board" },
@@ -45,16 +43,15 @@ export default function OrganizerSidebar({ isOpen = true, onClose }: OrganizerSi
         )}
       >
         <div className="flex h-full flex-col gap-2 p-4">
-          <div className="mb-4 border-b border-gray-300">
+          <div className="mb-4">
             <h2 className="text-lg font-bold whitespace-nowrap">Organizer Panel</h2>
-            <p className="text-sm text-muted-foreground whitespace-nowrap mb-4">Manage your events</p>
-            
-            {/* <div className="pt-2 border-gray-200">
+            <p className="text-sm text-muted-foreground whitespace-nowrap">Manage your events</p>
+            <div className="pt-2 border-gray-200">
               <Button onClick={handleLogout} variant="outline" className="w-full justify-center gap-3 bg-red-500 text-white">
                 <LogOut className="w-5 h-5" />
                 <span>Logout</span>
               </Button>
-            </div> */}
+            </div>
           </div>
           <nav className="space-y-1">
             {sidebarItems.map((item) => {

@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Calendar, Mail, Building, Search, Eye, Phone, FileText, Users } from "lucide-react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -35,7 +34,6 @@ interface Stats {
 }
 
 export default function OrganizerManagementPage() {
-  const router = useRouter()
   const [organizers, setOrganizers] = useState<Organizer[]>([])
   const [stats, setStats] = useState<Stats>({
     totalOrganizers: 0,
@@ -69,11 +67,6 @@ export default function OrganizerManagementPage() {
   const showDetails = (organizer: Organizer) => {
     setSelectedOrganizer(organizer)
     setDetailsOpen(true)
-  }
-
-  const handleViewOrganizerEvents = (organizerName: string) => {
-    // Navigate to event management page with organizerName as query param
-    router.push(`/admin/event-management?organizerName=${encodeURIComponent(organizerName)}`)
   }
 
   const filteredOrganizers = organizers.filter(
@@ -197,13 +190,7 @@ export default function OrganizerManagementPage() {
                           </span>
                         </div>
                         <div className="pt-2">
-                          <Badge 
-                            variant="secondary" 
-                            className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                            onClick={() => handleViewOrganizerEvents(organizer.name)}
-                          >
-                            {organizer.eventCount} Events Listed
-                          </Badge>
+                          <Badge variant="secondary">{organizer.eventCount} Events Listed</Badge>
                         </div>
                       </div>
                       <Button variant="outline" size="sm" onClick={() => showDetails(organizer)}>
