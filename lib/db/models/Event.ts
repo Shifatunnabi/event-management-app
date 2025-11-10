@@ -30,6 +30,8 @@ export interface IEvent extends Document {
   hasTicketLimit: boolean
   totalTickets?: number
   ticketsSold: number
+  reservedTickets: number
+  revenue: number
   
   // For free events - interested/going
   interested: mongoose.Types.ObjectId[]
@@ -133,6 +135,14 @@ const EventSchema = new Schema<IEvent>(
       min: 0,
     },
     ticketsSold: {
+      type: Number,
+      default: 0,
+    },
+    reservedTickets: {
+      type: Number,
+      default: 0,
+    },
+    revenue: {
       type: Number,
       default: 0,
     },

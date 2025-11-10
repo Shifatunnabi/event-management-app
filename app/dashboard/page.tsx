@@ -1,22 +1,120 @@
 "use client"
 
-import { useState } from "react"
-import { Search } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { Search, Loader2, Ticket as TicketIcon } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import TicketCard from "@/components/dashboard/ticket-card"
-import { userTickets } from "@/data/user-tickets"
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import TicketDisplay from "@/components/tickets/TicketDisplay"
+import Image from "next/image"
+import { Badge } from "@/components/ui/badge"
+import { Calendar, MapPin, QrCode } from "lucide-react"
+import Link from "next/link"
+
+interface TicketGroup {
+  event: {
+    id: string
+    title: string
+    date: string
+    time: string
+    location: string
+    locationLink?: string
+    organizerName: string
+    image: string
+    ticketPrice: number
+  }
+  tickets: Array<{
+    id: string
+    qrData: string
+    qrSignature: string
+    status: "ACTIVE" | "SCANNED" | "EXPIRED"
+    price: number
+    purchaseDate: string
+    scannedAt?: string
+    emailSent: boolean
+  }>
+  totalTickets: number
+  totalAmount: number
+  scannedCount: number
+  activeCount: number
+  expiredCount: number
+}
 
 export default function DashboardPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+  const [ticketGroups, setTicketGroups] = useState<TicketGroup[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [selectedGroup, setSelectedGroup] = useState<TicketGroup | null>(null)
 
-  const filteredTickets = userTickets.filter((ticket) =>
-    ticket.eventTitle.toLowerCase().includes(searchQuery.toLowerCase()),
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/signin")
+      return
+    }
+
+    if (status === "authenticated") {
+      fetchUserTickets()
+    }
+  }, [status, router])
+
+  const fetchUserTickets = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/tickets/user")
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setTicketGroups(data.ticketGroups || [])
+      }
+    } catch (error) {
+      console.error("Failed to fetch tickets:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const filteredTickets = ticketGroups.filter((group) =>
+    group.event.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return {
+      day: date.getDate(),
+      month: date.toLocaleDateString("en-US", { month: "short" }),
+      year: date.getFullYear(),
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "ACTIVE":
+        return "bg-green-500"
+      case "SCANNED":
+        return "bg-blue-500"
+      case "EXPIRED":
+        return "bg-gray-500"
+      default:
+        return "bg-gray-500"
+    }
+  }
+
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen">
       <div className="py-8">
-        <h1 className="mb-8 text-4xl font-bold">My Events</h1>
+        <h1 className="mb-8 text-4xl font-bold">My Tickets</h1>
 
         {/* Search Bar */}
         <div className="mb-8">
@@ -32,17 +130,138 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Tickets Grid - 1 column mobile, 2 columns tablet, 3 columns desktop */}
+        {/* Tickets Grid */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredTickets.length > 0 ? (
-            filteredTickets.map((ticket) => <TicketCard key={ticket.id} ticket={ticket} />)
+            filteredTickets.map((group) => {
+              const { day, month, year } = formatDate(group.event.date)
+              return (
+                <Card
+                  key={group.event.id}
+                  className="group overflow-hidden border-b-2 border-b-black/50 bg-gray-300/30 p-0 transition-all hover:shadow-lg"
+                >
+                  {/* Event Banner */}
+                  <div className="relative h-64 overflow-hidden">
+                    <Image
+                      src={group.event.image}
+                      alt={group.event.title}
+                      fill
+                      className="object-cover transition-transform group-hover:scale-105"
+                    />
+                    {/* Ticket Count Badge */}
+                    <div className="absolute top-4 right-4 bg-black/80 text-white px-3 py-1 rounded-full flex items-center gap-2">
+                      <TicketIcon className="h-4 w-4" />
+                      <span className="font-semibold">{group.totalTickets}</span>
+                    </div>
+                  </div>
+
+                  {/* Card Content */}
+                  <div className="space-y-3 p-4">
+                    {/* Event Title */}
+                    <h3 className="line-clamp-2 text-lg font-semibold leading-tight text-gray-900">
+                      {group.event.title}
+                    </h3>
+
+                    {/* Date & Location */}
+                    <div className="flex gap-3">
+                      {/* Date Box */}
+                      <div className="w-16 shrink-0 rounded-lg bg-[#ff7c07] p-3 border-2 border-black text-center text-black">
+                        <div className="text-2xl font-bold leading-none">{day}</div>
+                        <div className="mt-1 text-xs uppercase">{month}</div>
+                      </div>
+
+                      {/* Details */}
+                      <div className="flex-1 space-y-2 text-sm">
+                        <div className="flex items-start gap-2 text-gray-600">
+                          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                          <span className="line-clamp-1">{group.event.location}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Calendar className="h-4 w-4 shrink-0 text-green-600" />
+                          <span>{group.event.time}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Status Summary */}
+                    <div className="flex gap-2 text-xs">
+                      {group.activeCount > 0 && (
+                        <Badge className="bg-green-500">
+                          {group.activeCount} Active
+                        </Badge>
+                      )}
+                      {group.scannedCount > 0 && (
+                        <Badge className="bg-blue-500">
+                          {group.scannedCount} Scanned
+                        </Badge>
+                      )}
+                      {group.expiredCount > 0 && (
+                        <Badge className="bg-gray-500">
+                          {group.expiredCount} Expired
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Total Amount */}
+                    <div className="flex items-center justify-between border-t pt-3">
+                      <span className="text-sm text-gray-600">Total Paid</span>
+                      <span className="text-lg font-bold text-purple-600">
+                        ৳{group.totalAmount.toFixed(2)}
+                      </span>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        onClick={() => setSelectedGroup(group)}
+                        className="flex-1 bg-black hover:bg-white hover:text-black"
+                      >
+                        <QrCode className="mr-2 h-4 w-4" />
+                        View Tickets
+                      </Button>
+                      <Link href={`/events/${group.event.id}`} className="flex-1">
+                        <Button variant="outline" className="w-full bg-transparent">
+                          Event Details
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </Card>
+              )
+            })
           ) : (
             <div className="col-span-full py-12 text-center">
-              <p className="text-muted-foreground">No tickets found</p>
+              <TicketIcon className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+              <p className="text-xl font-semibold text-gray-600 mb-2">
+                No tickets yet
+              </p>
+              <p className="text-muted-foreground mb-4">
+                Purchase tickets for events to see them here
+              </p>
+              <Link href="/">
+                <Button>Browse Events</Button>
+              </Link>
             </div>
           )}
         </div>
       </div>
+
+      {/* Ticket Display Modal */}
+      {selectedGroup && (
+        <TicketDisplay
+          isOpen={!!selectedGroup}
+          onClose={() => setSelectedGroup(null)}
+          tickets={selectedGroup.tickets}
+          event={{
+            title: selectedGroup.event.title,
+            date: selectedGroup.event.date,
+            time: selectedGroup.event.time,
+            location: selectedGroup.event.location,
+            organizerName: selectedGroup.event.organizerName,
+            image: selectedGroup.event.image,
+          }}
+        />
+      )}
     </div>
   )
 }

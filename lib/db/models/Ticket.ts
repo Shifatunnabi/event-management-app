@@ -34,6 +34,9 @@ export interface ITicket extends Document {
   scannedAt?: Date
   scanHistory: IScanHistory[]
   
+  // Email status
+  emailSent: boolean
+  
   purchaseDate: Date
   createdAt: Date
   updatedAt: Date
@@ -120,6 +123,12 @@ const TicketSchema = new Schema<ITicket>(
     scanHistory: {
       type: [ScanHistorySchema],
       default: [],
+    },
+    
+    emailSent: {
+      type: Boolean,
+      default: false,
+      required: true,
     },
     
     purchaseDate: {

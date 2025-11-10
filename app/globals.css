@@ -226,3 +226,24 @@
 .prose li p {
   margin: 0;
 }
+
+/* QR Code Scanner Styles */
+#qr-reader {
+  width: 100% !important;
+  border: none !important;
+}
+
+#qr-reader video {
+  width: 100% !important;
+  height: auto !important;
+  border-radius: 0.5rem;
+}
+
+#qr-reader__dashboard,
+#qr-reader__dashboard_section {
+  display: none !important;
+}
+
+#qr-reader__scan_region {
+  border-radius: 0.5rem !important;
+}

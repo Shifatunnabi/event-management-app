@@ -64,7 +64,7 @@ export default function AttendeeManagementPage() {
   }
 
   const handleEventClick = (eventId: string) => {
-    router.push(`/organizer/organizer-event-details?eventId=${eventId}`)
+    router.push(`/organizer/attendees/${eventId}`)
   }
 
   const getTotalAttendees = (event: Event) => {

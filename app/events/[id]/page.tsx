@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import AdPlaceholder from "@/components/ui/ad-placeholder"
 import ShareModal from "@/components/ui/share-modal"
+import BuyTicketFlow from "@/components/tickets/BuyTicketFlow"
 
 interface Event {
   id: string
@@ -152,10 +153,27 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                   Event Finished
                 </Button>
               ) : isPremium ? (
-                <Button size="lg" className="bg-[#ff7c07] hover:bg-[#e66f06] text-white">
-                  <Ticket className="mr-2 h-5 w-5" />
-                  Buy Ticket - ${event.price}
-                </Button>
+                <BuyTicketFlow
+                  event={{
+                    id: event.id,
+                    title: event.title,
+                    image: event.image,
+                    date: event.date,
+                    time: event.time,
+                    location: event.location,
+                    organizerName: event.organizer,
+                    ticketPrice: typeof event.price === 'number' ? event.price : 0,
+                    totalTickets: event.totalTickets,
+                    ticketsSold: event.ticketsSold,
+                    reservedTickets: 0,
+                  }}
+                  trigger={
+                    <Button size="lg" className="bg-[#ff7c07] hover:bg-[#e66f06] text-white">
+                      <Ticket className="mr-2 h-5 w-5" />
+                      Buy Ticket - ৳{typeof event.price === 'number' ? event.price.toFixed(2) : '0.00'}
+                    </Button>
+                  }
+                />
               ) : (
                 <>
                   <Button size="lg" className="bg-[#ff7c07] hover:bg-[#e66f06] text-white">
