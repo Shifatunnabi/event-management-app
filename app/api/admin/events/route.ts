@@ -49,20 +49,31 @@ export async function GET(request: NextRequest) {
       .lean()
 
     // Transform events to include attendees count and other details
-    const transformedEvents = events.map((event: any) => ({
-      _id: event._id,
-      title: event.title,
-      slug: event.slug,
-      date: event.date,
-      time: event.time,
-      ticketType: event.ticketType,
-      organizerName: event.organizerName,
-      organizationName: event.organizationName,
-      status: event.status,
-      category: event.category,
-      location: event.location,
-      attendees: (event.interested?.length || 0) + (event.going?.length || 0),
-    }))
+    const transformedEvents = events.map((event: any) => {
+      // Determine ticket type based on ticket prices
+      const ticketTypes = event.ticketTypes || []
+      let ticketType = "FREE"
+      
+      if (ticketTypes.length > 0) {
+        const allFree = ticketTypes.every((t: any) => t.price === 0)
+        ticketType = allFree ? "FREE" : "PREMIUM"
+      }
+      
+      return {
+        _id: event._id,
+        title: event.title,
+        slug: event.slug,
+        date: event.date,
+        time: event.time,
+        ticketType: ticketType,
+        organizerName: event.organizerName,
+        organizationName: event.organizationName,
+        status: event.status,
+        category: event.category,
+        location: event.location,
+        attendees: event.ticketsSold || 0,
+      }
+    })
 
     return NextResponse.json({
       success: true,

@@ -190,7 +190,7 @@ export default function ScannerPage() {
       
       // Try to find environment/back camera
       const backCamera = devices.find(
-        (device) =>
+        (device: any) =>
           device.label.toLowerCase().includes("back") ||
           device.label.toLowerCase().includes("rear") ||
           device.label.toLowerCase().includes("environment")

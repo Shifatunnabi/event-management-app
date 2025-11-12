@@ -26,8 +26,6 @@ interface Event {
   ticketPrice?: number
   ticketsSold: number
   totalTickets?: number
-  interested: string[]
-  going: string[]
 }
 
 interface Attendee {
@@ -116,7 +114,7 @@ export default function OrganizerEventDetailsPage() {
     )
   }
 
-  const totalAttendees = (event.interested?.length || 0) + (event.going?.length || 0)
+  const totalAttendees = event.ticketsSold
   const totalRevenue = event.ticketType === "PREMIUM" && event.ticketPrice
     ? event.ticketsSold * event.ticketPrice
     : 0
@@ -194,7 +192,7 @@ export default function OrganizerEventDetailsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{totalAttendees}</div>
             <p className="text-xs text-muted-foreground">
-              {event.interested?.length || 0} interested, {event.going?.length || 0} going
+              Registered attendees
             </p>
           </CardContent>
         </Card>

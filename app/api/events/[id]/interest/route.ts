@@ -33,67 +33,28 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    const event = await Event.findById(id)
+    const event: any = await Event.findById(id)
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
 
-    // Check if event is free
-    if (event.ticketType !== "FREE") {
+    // Check if event is free (all ticket types have price 0 or no tickets)
+    const ticketTypes = event.ticketTypes || []
+    const isFree = ticketTypes.length === 0 || ticketTypes.every((t: any) => t.price === 0)
+    
+    if (!isFree) {
       return NextResponse.json(
         { error: "This action is only available for free events" },
         { status: 400 }
       )
     }
 
-    const userId = user._id
-
-    if (action === "interested") {
-      // Toggle interested
-      const isAlreadyInterested = event.interested.some(
-        (id: any) => id.toString() === userId.toString()
-      )
-
-      if (isAlreadyInterested) {
-        // Remove from interested
-        event.interested = event.interested.filter(
-          (id: any) => id.toString() !== userId.toString()
-        )
-      } else {
-        // Add to interested and remove from going if present
-        event.interested.push(userId)
-        event.going = event.going.filter(
-          (id: any) => id.toString() !== userId.toString()
-        )
-      }
-    } else if (action === "going") {
-      // Toggle going
-      const isAlreadyGoing = event.going.some(
-        (id: any) => id.toString() === userId.toString()
-      )
-
-      if (isAlreadyGoing) {
-        // Remove from going
-        event.going = event.going.filter(
-          (id: any) => id.toString() !== userId.toString()
-        )
-      } else {
-        // Add to going and remove from interested if present
-        event.going.push(userId)
-        event.interested = event.interested.filter(
-          (id: any) => id.toString() !== userId.toString()
-        )
-      }
-    }
-
-    await event.save()
-
-    return NextResponse.json({
-      success: true,
-      message: `Successfully ${action === "interested" ? "marked interested" : "marked going"}`,
-      interested: event.interested.length,
-      going: event.going.length,
-    })
+    // Note: interested/going functionality is deprecated for new events
+    // This API is kept for backward compatibility with old events
+    return NextResponse.json(
+      { error: "Interested/Going functionality is not available. For free events, users can register directly." },
+      { status: 400 }
+    )
   } catch (error) {
     console.error("Error updating event interest:", error)
     return NextResponse.json(
@@ -125,22 +86,24 @@ export async function GET(
     const { id } = await params
 
     const user = await User.findOne({ email: session.user.email })
-    const event = await Event.findById(id).select("interested going ticketType")
+    const event: any = await Event.findById(id).select("ticketTypes")
 
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
 
-    const userId = user?._id.toString()
+    // Determine ticket type
+    const ticketTypes = event.ticketTypes || []
+    const isFree = ticketTypes.length === 0 || ticketTypes.every((t: any) => t.price === 0)
+    const ticketType = isFree ? "FREE" : "PREMIUM"
 
+    // Note: interested/going functionality is deprecated
     return NextResponse.json({
-      isInterested: userId
-        ? event.interested.some((id: any) => id.toString() === userId)
-        : false,
-      isGoing: userId ? event.going.some((id: any) => id.toString() === userId) : false,
-      interestedCount: event.interested.length,
-      goingCount: event.going.length,
-      ticketType: event.ticketType,
+      isInterested: false,
+      isGoing: false,
+      interestedCount: 0,
+      goingCount: 0,
+      ticketType: ticketType,
     })
   } catch (error) {
     console.error("Error fetching interest status:", error)

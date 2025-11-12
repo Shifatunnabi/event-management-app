@@ -49,9 +49,11 @@ export default function JobApplicationModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // Validate required fields (phone is now required by backend)
     if (
       !formData.name ||
       !formData.email ||
+      !formData.phone ||
       !formData.occupation ||
       !formData.age ||
       !formData.dateOfBirth ||

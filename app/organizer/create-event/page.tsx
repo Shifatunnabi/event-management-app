@@ -4,25 +4,162 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Upload } from "lucide-react"
+import { Upload, Loader2, X, Image as ImageIcon } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import RichTextEditor from "@/components/ui/rich-text-editor"
+import { useToast } from "@/hooks/use-toast"
+import imageCompression from "browser-image-compression"
+import Image from "next/image"
 
 export default function CreateEventPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [poster, setPoster] = useState<File | null>(null)
+  const [posterPreview, setPosterPreview] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
+  const [description, setDescription] = useState("")
+  const [ticketType, setTicketType] = useState<"FREE" | "PREMIUM">("FREE")
+  const [hasTicketLimit, setHasTicketLimit] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) setPoster(file)
+    if (file) {
+      try {
+        setIsUploading(true)
+        
+        // Create preview
+        const previewUrl = URL.createObjectURL(file)
+        setPosterPreview(previewUrl)
+
+        // Compress image if larger than 10MB
+        const maxSizeInMB = 10
+        const fileSizeInMB = file.size / (1024 * 1024)
+
+        let fileToUpload = file
+
+        if (fileSizeInMB > maxSizeInMB) {
+          toast({
+            title: "Compressing image...",
+            description: "Your image is being compressed to optimize upload.",
+          })
+
+          const options = {
+            maxSizeMB: maxSizeInMB,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+          }
+
+          const compressedFile = await imageCompression(file, options)
+          fileToUpload = compressedFile
+
+          toast({
+            title: "Image compressed successfully",
+            description: `Size reduced from ${fileSizeInMB.toFixed(2)}MB to ${(compressedFile.size / (1024 * 1024)).toFixed(2)}MB`,
+          })
+        }
+
+        setPoster(fileToUpload)
+
+        // Upload to Cloudinary immediately
+        const uploadFormData = new FormData()
+        uploadFormData.append("file", fileToUpload)
+
+        const uploadResponse = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadFormData,
+        })
+
+        if (!uploadResponse.ok) {
+          throw new Error("Failed to upload image")
+        }
+
+        const uploadData = await uploadResponse.json()
+        setUploadedImageUrl(uploadData.url)
+
+        toast({
+          title: "Image uploaded successfully",
+          description: "Your event poster has been uploaded.",
+        })
+      } catch (error) {
+        console.error("Error uploading image:", error)
+        toast({
+          title: "Error",
+          description: "Failed to upload image. Please try again.",
+          variant: "destructive",
+        })
+        // Reset on error
+        setPoster(null)
+        setPosterPreview(null)
+        setUploadedImageUrl(null)
+      } finally {
+        setIsUploading(false)
+      }
+    }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleRemoveImage = () => {
+    setPoster(null)
+    setPosterPreview(null)
+    setUploadedImageUrl(null)
+    if (posterPreview) {
+      URL.revokeObjectURL(posterPreview)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    console.log("[v0] Create Event submitted")
+    setIsSubmitting(true)
+
+    try {
+      if (!uploadedImageUrl) {
+        throw new Error("Please upload an event poster")
+      }
+
+      const formData = new FormData(e.currentTarget)
+      formData.set("description", description)
+      formData.set("imageUrl", uploadedImageUrl)
+
+      // Debug: Log form data
+      console.log("Form data being sent:")
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value)
+      }
+
+      const response = await fetch("/api/organizers/events", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await response.json()
+      console.log("API Response:", data)
+
+      if (!response.ok) {
+        console.error("API Error:", data)
+        throw new Error(data.error || "Failed to create event")
+      }
+
+      toast({
+        title: "Success!",
+        description: "Event created successfully",
+      })
+
+      router.push("/organizer/dashboard")
+      router.refresh()
+    } catch (error) {
+      console.error("Error creating event:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create event",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -41,83 +178,236 @@ export default function CreateEventPage() {
             {/* Event Poster */}
             <div className="space-y-2">
               <Label htmlFor="poster">Event Poster</Label>
-              <div className="flex items-center gap-2">
-                <Input id="poster" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-                <Label
-                  htmlFor="poster"
-                  className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-8 text-sm hover:bg-accent"
-                >
-                  <Upload className="h-6 w-6" />
-                  <span>{poster ? poster.name : "Upload Event Poster"}</span>
-                </Label>
-              </div>
+              
+              {posterPreview ? (
+                <div className="relative w-full">
+                  <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-input">
+                    <Image
+                      src={posterPreview}
+                      alt="Event poster preview"
+                      fill
+                      className="object-cover"
+                    />
+                    {isUploading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                        <Loader2 className="h-8 w-8 animate-spin text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={handleRemoveImage}
+                    disabled={isUploading}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                  {uploadedImageUrl && (
+                    <p className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                      <ImageIcon className="h-3 w-3" />
+                      Image uploaded successfully
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <Input 
+                    id="poster" 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleFileChange} 
+                    className="hidden" 
+                    disabled={isUploading}
+                  />
+                  <Label
+                    htmlFor="poster"
+                    className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-8 text-sm hover:bg-accent"
+                  >
+                    <Upload className="h-6 w-6" />
+                    <span>Upload Event Poster</span>
+                  </Label>
+                </>
+              )}
+              
+              <p className="text-xs text-muted-foreground">
+                Images larger than 10MB will be automatically compressed and uploaded
+              </p>
             </div>
 
             {/* Event Title */}
             <div className="space-y-2">
               <Label htmlFor="title">Event Title</Label>
-              <Input id="title" placeholder="Enter event title" required />
+              <Input id="title" name="title" placeholder="Enter event title" required />
             </div>
 
             {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea id="description" placeholder="Describe your event..." rows={6} required />
+              <RichTextEditor
+                value={description}
+                onChange={setDescription}
+                placeholder="Describe your event..."
+              />
             </div>
 
             {/* Location */}
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
-              <Input id="location" placeholder="Event venue address" required />
+              <Input id="location" name="location" placeholder="Event venue address" required />
+            </div>
+
+            {/* Location Link (Optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="locationLink">Google Maps Location Link (Optional)</Label>
+              <div className="mb-2 text-sm text-muted-foreground space-y-1">
+                <p className="font-medium">Instructions:</p>
+                <ol className="list-decimal list-inside space-y-0.5 ml-2">
+                  <li>Open Google Maps</li>
+                  <li>Search your location</li>
+                  <li>Click Share</li>
+                  <li>Copy the link and paste here</li>
+                </ol>
+              </div>
+              <Input
+                id="locationLink"
+                name="locationLink"
+                placeholder="https://maps.app.goo.gl/..."
+                type="url"
+              />
             </div>
 
             {/* Date and Time */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="date">Event Date</Label>
-                <Input id="date" type="date" required />
+                <Input id="date" name="date" type="date" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="time">Event Time</Label>
-                <Input id="time" type="time" required />
+                <Input id="time" name="time" type="time" required />
               </div>
             </div>
 
             {/* Category */}
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <select
+              <Input
                 id="category"
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                name="category"
+                placeholder="e.g., Music, Tech Events, Food & Drink, Business, Sports, Arts"
                 required
-              >
-                <option value="">Select a category</option>
-                <option value="music">Music</option>
-                <option value="tech">Tech Events</option>
-                <option value="food">Food & Drink</option>
-                <option value="business">Business</option>
-                <option value="sports">Sports</option>
-                <option value="arts">Performing & Visual Arts</option>
-              </select>
+              />
             </div>
 
             {/* Ticket Information */}
             <div className="space-y-4 rounded-lg border p-4">
               <h3 className="font-semibold">Ticket Information</h3>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="price">Ticket Price ($)</Label>
-                  <Input id="price" type="number" placeholder="0.00" min="0" step="0.01" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="quantity">Available Tickets</Label>
-                  <Input id="quantity" type="number" placeholder="100" min="1" required />
+
+              {/* Ticket Type */}
+              <div className="space-y-2">
+                <Label>Ticket Type</Label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="ticketType"
+                      value="FREE"
+                      checked={ticketType === "FREE"}
+                      onChange={(e) => setTicketType(e.target.value as "FREE" | "PREMIUM")}
+                      className="h-4 w-4"
+                    />
+                    <span>Free</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="ticketType"
+                      value="PREMIUM"
+                      checked={ticketType === "PREMIUM"}
+                      onChange={(e) => setTicketType(e.target.value as "FREE" | "PREMIUM")}
+                      className="h-4 w-4"
+                    />
+                    <span>Premium</span>
+                  </label>
                 </div>
               </div>
+
+              {/* Ticket Price (only for Premium) */}
+              {ticketType === "PREMIUM" && (
+                <div className="space-y-2">
+                  <Label htmlFor="ticketPrice">Ticket Price ($)</Label>
+                  <Input
+                    id="ticketPrice"
+                    name="ticketPrice"
+                    type="number"
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                    required={ticketType === "PREMIUM"}
+                  />
+                </div>
+              )}
+
+              {/* Ticket Limit */}
+              <div className="space-y-2">
+                <Label>Available Tickets</Label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="hasTicketLimitRadio"
+                      checked={!hasTicketLimit}
+                      onChange={() => setHasTicketLimit(false)}
+                      className="h-4 w-4"
+                    />
+                    <span>Unlimited</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="hasTicketLimitRadio"
+                      checked={hasTicketLimit}
+                      onChange={() => setHasTicketLimit(true)}
+                      className="h-4 w-4"
+                    />
+                    <span>Limited</span>
+                  </label>
+                </div>
+                <input type="hidden" name="hasTicketLimit" value={hasTicketLimit.toString()} />
+              </div>
+
+              {/* Total Tickets (only if Limited) */}
+              {hasTicketLimit && (
+                <div className="space-y-2">
+                  <Label htmlFor="totalTickets">Number of Available Tickets</Label>
+                  <Input
+                    id="totalTickets"
+                    name="totalTickets"
+                    type="number"
+                    placeholder="100"
+                    min="1"
+                    required={hasTicketLimit}
+                  />
+                </div>
+              )}
             </div>
 
-            <Button type="submit" className="bg-[#ff7c07] hover:bg-[#e66f06] w-full text-white" size="lg">
-              Create Event
+            <Button
+              type="submit"
+              className="bg-[#ff7c07] hover:bg-[#e66f06] w-full text-white"
+              size="lg"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating Event...
+                </>
+              ) : (
+                "Create Event"
+              )}
             </Button>
           </form>
         </CardContent>

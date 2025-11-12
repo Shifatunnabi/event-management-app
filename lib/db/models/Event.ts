@@ -17,9 +17,12 @@ export interface IEvent extends Document {
   date: Date
   time: string
   location: string
+  locationLink?: string
   category: string
   organizerId: mongoose.Types.ObjectId
   organizerName: string
+  organizationName?: string
+  slug?: string
   
   // Capacity management
   hasCapacityLimit: boolean
@@ -41,6 +44,10 @@ export interface IEvent extends Document {
   
   createdAt: Date
   updatedAt: Date
+  
+  // Helper methods
+  getTicketType(): "FREE" | "PREMIUM"
+  getMinimumPrice(): number
 }
 
 const TicketTypeSchema = new Schema<ITicketType>({
@@ -80,6 +87,10 @@ const EventSchema = new Schema<IEvent>(
       required: [true, "Location is required"],
       trim: true,
     },
+    locationLink: {
+      type: String,
+      required: false,
+    },
     category: {
       type: String,
       required: [true, "Category is required"],
@@ -92,6 +103,14 @@ const EventSchema = new Schema<IEvent>(
     organizerName: {
       type: String,
       required: true,
+    },
+    organizationName: {
+      type: String,
+      required: false,
+    },
+    slug: {
+      type: String,
+      required: false,
     },
     
     hasCapacityLimit: {
@@ -135,7 +154,28 @@ const EventSchema = new Schema<IEvent>(
   }
 )
 
+// Helper methods
+EventSchema.methods.getTicketType = function(): "FREE" | "PREMIUM" {
+  if (!this.ticketTypes || this.ticketTypes.length === 0) {
+    return "FREE"
+  }
+  
+  // Check if all ticket types are free (price === 0)
+  const allFree = this.ticketTypes.every((ticket: ITicketType) => ticket.price === 0)
+  return allFree ? "FREE" : "PREMIUM"
+}
+
+EventSchema.methods.getMinimumPrice = function(): number {
+  if (!this.ticketTypes || this.ticketTypes.length === 0) {
+    return 0
+  }
+  
+  // Find the minimum price among all ticket types
+  return Math.min(...this.ticketTypes.map((ticket: ITicketType) => ticket.price))
+}
+
 // Indexes
+EventSchema.index({ slug: 1 }, { unique: true, sparse: true })
 EventSchema.index({ organizerId: 1, status: 1, date: 1 })
 EventSchema.index({ status: 1, date: 1 })
 EventSchema.index({ category: 1, date: 1 })

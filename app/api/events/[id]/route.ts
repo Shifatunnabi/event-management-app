@@ -27,6 +27,52 @@ export async function GET(
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
 
+    // Determine ticket type based on ticket prices
+    const ticketTypes = event.ticketTypes || []
+    
+    // If no ticket types, it's a free event
+    if (ticketTypes.length === 0) {
+      const ticketType = "FREE"
+      const minPrice = 0
+      
+      const transformedEvent = {
+        id: event._id.toString(),
+        slug: event.slug,
+        title: event.title,
+        description: event.description,
+        image: event.image,
+        date: event.date.toISOString().split("T")[0],
+        time: event.time,
+        location: event.location,
+        locationLink: event.locationLink,
+        category: event.category,
+        organizer: event.organizerName,
+        organizationName: event.organizationName,
+        organizerId: event.organizerId.toString(),
+        price: "Free",
+        ticketType: ticketType,
+        ticketTypes: [],
+        hasTicketLimit: event.hasCapacityLimit,
+        totalTickets: event.totalCapacity,
+        ticketsSold: event.ticketsSold,
+        attendees: event.attendees,
+        isFeatured: event.isFeatured,
+        status: event.status,
+        createdAt: event.createdAt,
+        updatedAt: event.updatedAt,
+      }
+      
+      return NextResponse.json({
+        success: true,
+        event: transformedEvent,
+      })
+    }
+    
+    // Determine if all tickets are free
+    const minPrice = Math.min(...ticketTypes.map((t: any) => t.price))
+    const allFree = ticketTypes.every((t: any) => t.price === 0)
+    const ticketType = allFree ? "FREE" : "PREMIUM"
+    
     // Transform event to match frontend interface
     const transformedEvent = {
       id: event._id.toString(),
@@ -42,10 +88,11 @@ export async function GET(
       organizer: event.organizerName,
       organizationName: event.organizationName,
       organizerId: event.organizerId.toString(),
-      price: event.ticketType === "FREE" ? "Free" : event.ticketPrice || 0,
-      ticketType: event.ticketType,
-      hasTicketLimit: event.hasTicketLimit,
-      totalTickets: event.totalTickets,
+      price: minPrice === 0 ? "Free" : minPrice,
+      ticketType: ticketType,
+      ticketTypes: ticketTypes,
+      hasTicketLimit: event.hasCapacityLimit,
+      totalTickets: event.totalCapacity,
       ticketsSold: event.ticketsSold,
       attendees: event.attendees,
       isFeatured: event.isFeatured,

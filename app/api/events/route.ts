@@ -43,30 +43,39 @@ export async function GET(request: NextRequest) {
     const events = await query
 
     // Transform events to match frontend interface
-    const transformedEvents = events.map((event: any) => ({
-      id: event._id.toString(),
-      slug: event.slug,
-      title: event.title,
-      description: event.description,
-      image: event.image,
-      date: event.date.toISOString().split("T")[0],
-      time: event.time,
-      location: event.location,
-      locationLink: event.locationLink,
-      category: event.category,
-      organizer: event.organizerName,
-      organizationName: event.organizationName,
-      organizerId: event.organizerId.toString(),
-      price: event.ticketType === "FREE" ? "Free" : event.ticketPrice || 0,
-      ticketType: event.ticketType,
-      hasTicketLimit: event.hasTicketLimit,
-      totalTickets: event.totalTickets,
-      ticketsSold: event.ticketsSold,
-      attendees: event.attendees,
-      isFeatured: event.isFeatured,
-      createdAt: event.createdAt,
-      updatedAt: event.updatedAt,
-    }))
+    const transformedEvents = events.map((event: any) => {
+      // Get the minimum ticket price and determine ticket type
+      const ticketTypes = event.ticketTypes || []
+      const minPrice = ticketTypes.length > 0 
+        ? Math.min(...ticketTypes.map((t: any) => t.price))
+        : 0
+      const price = minPrice === 0 ? "Free" : minPrice
+      
+      return {
+        id: event._id.toString(),
+        slug: event.slug,
+        title: event.title,
+        description: event.description,
+        image: event.image,
+        date: event.date.toISOString().split("T")[0],
+        time: event.time,
+        location: event.location,
+        locationLink: event.locationLink,
+        category: event.category,
+        organizer: event.organizerName,
+        organizerId: event.organizerId.toString(),
+        price,
+        ticketTypes: ticketTypes,
+        hasCapacityLimit: event.hasCapacityLimit,
+        totalCapacity: event.totalCapacity,
+        ticketsSold: event.ticketsSold,
+        attendees: event.attendees,
+        isFeatured: event.isFeatured,
+        status: event.status,
+        createdAt: event.createdAt,
+        updatedAt: event.updatedAt,
+      }
+    })
 
     return NextResponse.json({
       success: true,

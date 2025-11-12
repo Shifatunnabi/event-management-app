@@ -4,6 +4,7 @@ export interface IVendor extends Document {
   _id: string
   userId: mongoose.Types.ObjectId
   name: string
+  photo?: string
   serviceName: string
   category: string
   
@@ -37,12 +38,15 @@ const VendorSchema = new Schema<IVendor>(
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
-      unique: true,
+      required: false, // Made optional because existing vendors don't have userId
     },
     name: {
       type: String,
       required: [true, "Name is required"],
+      trim: true,
+    },
+    photo: {
+      type: String,
       trim: true,
     },
     serviceName: {

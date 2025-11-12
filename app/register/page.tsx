@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { UserCircle, Building2 } from "lucide-react"
+import { UserCircle, Building2, Briefcase } from "lucide-react"
 import { toast } from "sonner"
+import VendorRegistrationForm from "@/components/vendor/vendor-registration-form"
 
-type UserType = "USER" | "ORGANIZER" | null
+type UserType = "USER" | "ORGANIZER" | "VENDOR" | null
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -88,7 +89,7 @@ export default function RegisterPage() {
             <p className="text-muted-foreground">Choose how you want to join EventGhor</p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-3">
             {/* Regular User Card */}
             <Card
               className="cursor-pointer transition-all hover:border-primary hover:shadow-lg "
@@ -101,14 +102,6 @@ export default function RegisterPage() {
                 <CardTitle className="text-xl md:text-2xl font-bold">Register as User</CardTitle>
                 <CardDescription>Buy tickets, apply for jobs, and explore events</CardDescription>
               </CardHeader>
-              {/* <CardContent>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>✓ Purchase event tickets</li>
-                  <li>✓ Apply for event jobs</li>
-                  <li>✓ Manage your bookings</li>
-                  <li>✓ Instant account activation</li>
-                </ul>
-              </CardContent> */}
             </Card>
 
             {/* Organizer Card */}
@@ -123,14 +116,20 @@ export default function RegisterPage() {
                 <CardTitle className="text-xl md:text-2xl font-bold">Register as Event Organizer</CardTitle>
                 <CardDescription className="pb-4">Create events, post jobs, and manage attendees</CardDescription>
               </CardHeader>
-              {/* <CardContent>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>✓ Create and manage events</li>
-                  <li>✓ Post job opportunities</li>
-                  <li>✓ Track ticket sales</li>
-                  <li>⚠ Requires admin approval</li>
-                </ul>
-              </CardContent> */}
+            </Card>
+
+            {/* Vendor Card */}
+            <Card
+              className="cursor-pointer transition-all hover:border-primary hover:shadow-lg "
+              onClick={() => setUserType("VENDOR")}
+            >
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10">
+                  <Briefcase className="h-10 w-10 text-green-500" />
+                </div>
+                <CardTitle className="text-xl md:text-2xl font-bold">Register as Vendor</CardTitle>
+                <CardDescription className="pb-4">Offer services and grow your business</CardDescription>
+              </CardHeader>
             </Card>
           </div>
         </div>
@@ -138,7 +137,12 @@ export default function RegisterPage() {
     )
   }
 
-  // Step 2: Show registration form
+  // Step 2: Show vendor registration form if vendor is selected
+  if (userType === "VENDOR") {
+    return <VendorRegistrationForm onBack={() => setUserType(null)} />
+  }
+
+  // Step 2: Show registration form for USER or ORGANIZER
   return (
     <div className="container mx-auto max-w-2xl px-4 py-12">
       <div className="mb-8">

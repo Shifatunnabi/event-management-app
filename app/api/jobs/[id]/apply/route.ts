@@ -3,7 +3,7 @@ import connectDB from "@/lib/db/mongodb"
 import Job from "@/lib/db/models/Job"
 import JobApplication from "@/lib/db/models/JobApplication"
 
-// POST - Apply for a job
+// POST - Apply for a job (no authentication required)
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -37,12 +37,15 @@ export async function POST(
       address,
       experienceYears,
       experienceDetails,
+      coverLetter,
+      resumeUrl,
     } = body
 
     // Validate required fields
     if (
       !name ||
       !email ||
+      !phone ||
       !occupation ||
       !age ||
       !dateOfBirth ||
@@ -57,33 +60,33 @@ export async function POST(
       )
     }
 
-    // Check for duplicate application
+    // Check for duplicate application by email
     const existingApplication = await JobApplication.findOne({
       jobId: id,
-      email: email.toLowerCase(),
+      userEmail: email.toLowerCase(),
     })
 
     if (existingApplication) {
-      return NextResponse.json(
-        { error: "You have already applied for this job" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "You have already applied for this job" }, { status: 400 })
     }
 
-    // Create application
+    // Create application (no userId field for anonymous applications)
     const application = await JobApplication.create({
       jobId: id,
       jobTitle: job.title,
-      name,
-      email: email.toLowerCase(),
-      phone,
+      // userId is intentionally omitted for anonymous applications
+      userName: name,
+      userEmail: email.toLowerCase(),
+      userPhone: phone,
       occupation,
-      age: parseInt(age),
+      age: Number(age),
       dateOfBirth: new Date(dateOfBirth),
       gender,
       address,
-      experienceYears: parseInt(experienceYears),
+      experienceYears: Number(experienceYears),
       experienceDetails,
+      coverLetter: coverLetter || undefined,
+      resumeUrl: resumeUrl || undefined,
       status: "PENDING",
     })
 

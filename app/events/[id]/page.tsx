@@ -3,7 +3,7 @@
 import { use, useState, useEffect } from "react"
 import Image from "next/image"
 import { notFound } from "next/navigation"
-import { Calendar, MapPin, Users, Share2, Heart, Ticket } from "lucide-react"
+import { Calendar, MapPin, Users, Share2, Ticket } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -94,11 +94,49 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
     if (!locationLink) return null
 
     try {
-      // Extract location from Google Maps share link
-      // Example: https://maps.app.goo.gl/g99CghapApba4Dut1
-      // or https://www.google.com/maps/place/...
+      // Handle various Google Maps URL formats:
+      // 1. Short link: https://maps.app.goo.gl/xxxxx or https://goo.gl/maps/xxxxx
+      // 2. Full link: https://www.google.com/maps/place/...
+      // 3. Coordinate link: https://www.google.com/maps/@lat,lng,zoom
+      // 4. Search link: https://www.google.com/maps/search/...
+      
+      // If it's a shortened link (goo.gl), use the simple embed format
+      if (locationLink.includes('goo.gl')) {
+        return `https://www.google.com/maps?q=${encodeURIComponent(locationLink)}&output=embed`
+      }
+      
+      // If it contains /place/, extract the place name
+      if (locationLink.includes('/place/')) {
+        const placeMatch = locationLink.match(/\/place\/([^/@]+)/)
+        if (placeMatch) {
+          const placeName = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
+          return `https://www.google.com/maps?q=${encodeURIComponent(placeName)}&output=embed`
+        }
+      }
+      
+      // If it contains coordinates (@lat,lng)
+      if (locationLink.includes('/@')) {
+        const coordMatch = locationLink.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+        if (coordMatch) {
+          const lat = coordMatch[1]
+          const lng = coordMatch[2]
+          return `https://www.google.com/maps?q=${lat},${lng}&output=embed`
+        }
+      }
+      
+      // If it contains /search/, extract the search query
+      if (locationLink.includes('/search/')) {
+        const searchMatch = locationLink.match(/\/search\/([^/]+)/)
+        if (searchMatch) {
+          const searchQuery = decodeURIComponent(searchMatch[1].replace(/\+/g, ' '))
+          return `https://www.google.com/maps?q=${encodeURIComponent(searchQuery)}&output=embed`
+        }
+      }
+      
+      // Default fallback: try to embed the full URL or use it as a search query
       return `https://www.google.com/maps?q=${encodeURIComponent(locationLink)}&output=embed`
-    } catch {
+    } catch (error) {
+      console.error('Error parsing map URL:', error)
       return null
     }
   }
@@ -175,16 +213,27 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                   }
                 />
               ) : (
-                <>
-                  <Button size="lg" className="bg-[#ff7c07] hover:bg-[#e66f06] text-white">
-                    <Heart className="mr-2 h-5 w-5" />
-                    Interested
-                  </Button>
-                  <Button size="lg" variant="outline">
-                    <Users className="mr-2 h-5 w-5" />
-                    Going
-                  </Button>
-                </>
+                <BuyTicketFlow
+                  event={{
+                    id: event.id,
+                    title: event.title,
+                    image: event.image,
+                    date: event.date,
+                    time: event.time,
+                    location: event.location,
+                    organizerName: event.organizer,
+                    ticketPrice: 0,
+                    totalTickets: event.totalTickets,
+                    ticketsSold: event.ticketsSold,
+                    reservedTickets: 0,
+                  }}
+                  trigger={
+                    <Button size="lg" className="bg-[#ff7c07] hover:bg-[#e66f06] text-white">
+                      <Ticket className="mr-2 h-5 w-5" />
+                      Get Free Ticket
+                    </Button>
+                  }
+                />
               )}
               <Button 
                 size="lg" 
@@ -278,11 +327,11 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                     {/* Interactive Map - only show if locationLink is provided */}
                     {embedMapUrl && (
                       <>
-                        <div className="overflow-hidden rounded-lg bg-muted border border-border">
+                        <div className="overflow-hidden rounded-lg bg-muted border border-border shadow-sm">
                           <iframe
                             src={embedMapUrl}
                             width="100%"
-                            height="200"
+                            height="250"
                             style={{ border: 0 }}
                             allowFullScreen
                             loading="lazy"
@@ -293,7 +342,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                         
                         <Button 
                           size="sm" 
-                          className="mt-2 w-full border border-black hover:bg-white hover:text-black"
+                          className="mt-2 w-full bg-[#ff7c07] hover:bg-[#e66f06] text-white"
                           asChild
                         >
                           <a href={event.locationLink} target="_blank" rel="noopener noreferrer">

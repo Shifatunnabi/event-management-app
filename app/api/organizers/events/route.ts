@@ -47,10 +47,35 @@ export async function POST(request: NextRequest) {
     const totalTickets = formData.get("totalTickets")
     const imageUrl = formData.get("imageUrl") as string
 
+    // Log received data for debugging
+    console.log("Received form data:", {
+      title,
+      description: description?.substring(0, 50) + "...",
+      location,
+      locationLink,
+      date,
+      time,
+      category,
+      ticketType,
+      ticketPrice,
+      hasTicketLimit,
+      totalTickets,
+      imageUrl
+    })
+
     // Validate required fields
     if (!title || !description || !location || !date || !time || !category || !ticketType) {
+      const missing = []
+      if (!title) missing.push("title")
+      if (!description) missing.push("description")
+      if (!location) missing.push("location")
+      if (!date) missing.push("date")
+      if (!time) missing.push("time")
+      if (!category) missing.push("category")
+      if (!ticketType) missing.push("ticketType")
+      
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: `Missing required fields: ${missing.join(", ")}` },
         { status: 400 }
       )
     }
@@ -78,39 +103,61 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Create ticket types array
+    const ticketTypes = []
+    
+    if (ticketType === "FREE") {
+      ticketTypes.push({
+        name: "Free Ticket",
+        price: 0,
+        hasLimit: hasTicketLimit,
+        quantity: hasTicketLimit && totalTickets ? parseInt(totalTickets as string, 10) : null,
+        sold: 0,
+        available: hasTicketLimit && totalTickets ? parseInt(totalTickets as string, 10) : null,
+      })
+    } else if (ticketType === "PREMIUM" && ticketPrice) {
+      ticketTypes.push({
+        name: "Premium Ticket",
+        price: parseFloat(ticketPrice as string),
+        hasLimit: hasTicketLimit,
+        quantity: hasTicketLimit && totalTickets ? parseInt(totalTickets as string, 10) : null,
+        sold: 0,
+        available: hasTicketLimit && totalTickets ? parseInt(totalTickets as string, 10) : null,
+      })
+    }
+
+    // Generate unique slug for the event
+    const slug = generateUniqueSlug(title)
+
     // Create event
     const eventData: any = {
       title,
-      slug: generateUniqueSlug(title),
+      slug,
       description,
       image: imageUrl,
       date: new Date(date),
       time,
       location,
+      locationLink: locationLink || undefined,
       category,
-      ticketType,
-      hasTicketLimit,
       organizerId: user._id,
       organizerName: user.name,
-      organizationName: user.organizationName,
+      organizationName: user.organizationName || undefined,
+      hasCapacityLimit: hasTicketLimit,
+      totalCapacity: hasTicketLimit && totalTickets ? parseInt(totalTickets as string, 10) : null,
+      ticketsSold: 0,
+      ticketTypes,
       status: "PUBLISHED",
+      isFeatured: false,
+      attendees: 0,
       publishedAt: new Date(),
     }
 
-    // Add optional fields
-    if (locationLink) {
-      eventData.locationLink = locationLink
-    }
-
-    if (ticketType === "PREMIUM" && ticketPrice) {
-      eventData.ticketPrice = parseFloat(ticketPrice as string)
-    }
-
-    if (hasTicketLimit && totalTickets) {
-      eventData.totalTickets = parseInt(totalTickets as string, 10)
-    }
+    console.log("Creating event with data:", JSON.stringify(eventData, null, 2))
 
     const event = await Event.create(eventData)
+    
+    console.log("Event created successfully:", event._id)
 
     return NextResponse.json(
       {
@@ -126,8 +173,15 @@ export async function POST(request: NextRequest) {
     )
   } catch (error) {
     console.error("Error creating event:", error)
+    
+    // Return detailed error message
+    const errorMessage = error instanceof Error ? error.message : "Failed to create event"
+    
     return NextResponse.json(
-      { error: "Failed to create event" },
+      { 
+        error: errorMessage,
+        details: error instanceof Error ? error.stack : undefined 
+      },
       { status: 500 }
     )
   }
@@ -179,7 +233,7 @@ export async function GET(request: NextRequest) {
       time: event.time,
       status: event.status,
       ticketsSold: event.ticketsSold || 0,
-      attendees: (event.interested?.length || 0) + (event.going?.length || 0),
+      attendees: event.ticketsSold || 0,
     }))
 
     return NextResponse.json({

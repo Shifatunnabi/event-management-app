@@ -352,11 +352,14 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
             {/* Location Link */}
             <div className="space-y-2">
               <Label htmlFor="locationLink">Google Maps Link (Optional)</Label>
+              <div className="mb-2 text-sm text-muted-foreground">
+                <p>Get the share link from Google Maps to display an embedded map on your event page</p>
+              </div>
               <Input
                 id="locationLink"
                 name="locationLink"
                 type="url"
-                placeholder="https://maps.google.com/..."
+                placeholder="https://maps.app.goo.gl/..."
                 defaultValue={event.locationLink || ""}
               />
             </div>

@@ -24,9 +24,9 @@ interface Job {
 
 interface Application {
   _id: string
-  name: string
-  email: string
-  phone?: string
+  userName: string
+  userEmail: string
+  userPhone?: string
   occupation: string
   age: number
   dateOfBirth: string
@@ -216,7 +216,7 @@ export default function JobDetailsPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <User className="h-5 w-5 text-muted-foreground" />
-                            <h3 className="text-lg font-semibold">{app.name}</h3>
+                            <h3 className="text-lg font-semibold">{app.userName}</h3>
                           </div>
                           <p className="text-sm text-muted-foreground">{app.occupation}</p>
                         </div>
@@ -231,16 +231,16 @@ export default function JobDetailsPage() {
                           <Mail className="h-4 w-4 text-muted-foreground" />
                           <div className="min-w-0">
                             <p className="text-xs text-muted-foreground">Email</p>
-                            <p className="text-sm truncate">{app.email}</p>
+                            <p className="text-sm truncate">{app.userEmail}</p>
                           </div>
                         </div>
 
-                        {app.phone && (
+                        {app.userPhone && (
                           <div className="flex items-center gap-2">
                             <Phone className="h-4 w-4 text-muted-foreground" />
                             <div>
                               <p className="text-xs text-muted-foreground">Phone</p>
-                              <p className="text-sm">{app.phone}</p>
+                              <p className="text-sm">{app.userPhone}</p>
                             </div>
                           </div>
                         )}
