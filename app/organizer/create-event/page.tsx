@@ -336,18 +336,36 @@ export default function CreateEventPage() {
 
               {/* Ticket Price (only for Premium) */}
               {ticketType === "PREMIUM" && (
-                <div className="space-y-2">
-                  <Label htmlFor="ticketPrice">Ticket Price ($)</Label>
-                  <Input
-                    id="ticketPrice"
-                    name="ticketPrice"
-                    type="number"
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                    required={ticketType === "PREMIUM"}
-                  />
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="ticketPrice">Ticket Price (৳)</Label>
+                    <Input
+                      id="ticketPrice"
+                      name="ticketPrice"
+                      type="number"
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      required={ticketType === "PREMIUM"}
+                    />
+                  </div>
+                  
+                  {/* Bkash Number (required for premium) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="bkashNumber">Bkash Number (for receiving payments)</Label>
+                    <Input
+                      id="bkashNumber"
+                      name="bkashNumber"
+                      type="tel"
+                      placeholder="01XXXXXXXXX"
+                      pattern="^01[0-9]{9}$"
+                      required={ticketType === "PREMIUM"}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Enter the Bkash number where you want to receive ticket payments
+                    </p>
+                  </div>
+                </>
               )}
 
               {/* Ticket Limit */}

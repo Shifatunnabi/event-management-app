@@ -7,7 +7,7 @@ import User from "@/lib/db/models/User"
 // POST - Mark interested or going for a free event
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const session = await auth()
@@ -18,7 +18,7 @@ export async function POST(
 
     await connectDB()
 
-    const { id } = await params
+    const { slug } = await params
     const { action } = await request.json()
 
     if (!action || !["interested", "going"].includes(action)) {
@@ -33,7 +33,7 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    const event: any = await Event.findById(id)
+    const event: any = await Event.findOne({ slug })
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
@@ -67,7 +67,7 @@ export async function POST(
 // GET - Get user's interest status for an event
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const session = await auth()
@@ -83,10 +83,10 @@ export async function GET(
 
     await connectDB()
 
-    const { id } = await params
+    const { slug } = await params
 
     const user = await User.findOne({ email: session.user.email })
-    const event: any = await Event.findById(id).select("ticketTypes")
+    const event: any = await Event.findOne({ slug }).select("ticketTypes")
 
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })

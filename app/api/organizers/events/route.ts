@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
     const category = formData.get("category") as string
     const ticketType = formData.get("ticketType") as "FREE" | "PREMIUM"
     const ticketPrice = formData.get("ticketPrice")
+    const bkashNumber = formData.get("bkashNumber") as string
     const hasTicketLimit = formData.get("hasTicketLimit") === "true"
     const totalTickets = formData.get("totalTickets")
     const imageUrl = formData.get("imageUrl") as string
@@ -92,6 +93,13 @@ export async function POST(request: NextRequest) {
     if (ticketType === "PREMIUM" && !ticketPrice) {
       return NextResponse.json(
         { error: "Ticket price is required for premium events" },
+        { status: 400 }
+      )
+    }
+    
+    if (ticketType === "PREMIUM" && !bkashNumber) {
+      return NextResponse.json(
+        { error: "Bkash number is required for premium events" },
         { status: 400 }
       )
     }
@@ -147,6 +155,7 @@ export async function POST(request: NextRequest) {
       totalCapacity: hasTicketLimit && totalTickets ? parseInt(totalTickets as string, 10) : null,
       ticketsSold: 0,
       ticketTypes,
+      bkashNumber: ticketType === "PREMIUM" ? bkashNumber : undefined,
       status: "PUBLISHED",
       isFeatured: false,
       attendees: 0,

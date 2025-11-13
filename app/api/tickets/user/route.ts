@@ -1,55 +1,55 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import connectDB from "@/lib/db/mongodb";
-import Ticket from "@/lib/db/models/Ticket";
-import Event from "@/lib/db/models/Event";
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import dbConnect from "@/lib/db/mongodb"
+import TicketBooking from "@/lib/db/models/TicketBooking"
+import Event from "@/lib/db/models/Event"
 
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await auth()
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    await connectDB();
+    await dbConnect()
 
-    const { searchParams } = new URL(req.url);
-    const eventId = searchParams.get("eventId");
-
-    // Build query
-    const query: any = {
+    // Find all CONFIRMED bookings for the user
+    const bookings: any[] = await TicketBooking.find({
       userId: session.user.id,
-    };
+      status: "CONFIRMED",
+    })
+      .sort({ createdAt: -1 })
+      .lean()
 
-    if (eventId) {
-      query.eventId = eventId;
-    }
+    // Group by event
+    const eventMap = new Map()
 
-    // Fetch tickets
-    const tickets = await Ticket.find(query)
-      .populate("eventId", "title date time location locationLink organizerName image ticketPrice")
-      .sort({ purchaseDate: -1 });
+    for (const booking of bookings) {
+      // Fetch event details
+      const event: any = await Event.findOne({ slug: booking.eventSlug }).lean()
 
-    // Group tickets by event
-    const groupedTickets = tickets.reduce((acc, ticket) => {
-      const eventIdStr = ticket.eventId._id.toString();
+      if (!event) continue
 
-      if (!acc[eventIdStr]) {
-        acc[eventIdStr] = {
+      const eventId = event._id.toString()
+
+      if (!eventMap.has(eventId)) {
+        eventMap.set(eventId, {
           event: {
-            id: ticket.eventId._id,
-            title: ticket.eventTitle,
-            date: ticket.eventDate,
-            time: ticket.eventId.time,
-            location: ticket.eventLocation,
-            locationLink: ticket.eventId.locationLink,
-            organizerName: ticket.eventId.organizerName,
-            image: ticket.eventImage,
-            ticketPrice: ticket.eventId.ticketPrice,
+            id: eventId,
+            title: event.title,
+            date: event.startDate,
+            time: new Date(event.startDate).toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            location: event.location,
+            locationLink: event.locationLink,
+            organizerName: event.organizerName || "Event Organizer",
+            image: event.coverImage || "/images/placeholder-event.jpg",
+            ticketPrice: event.ticketTypes && event.ticketTypes.length > 0
+              ? event.ticketTypes[0].price || 0
+              : 0,
           },
           tickets: [],
           totalTickets: 0,
@@ -57,48 +57,55 @@ export async function GET(req: NextRequest) {
           scannedCount: 0,
           activeCount: 0,
           expiredCount: 0,
-        };
+        })
       }
 
-      acc[eventIdStr].tickets.push({
-        id: ticket._id,
-        qrData: ticket.qrData,
-        qrSignature: ticket.qrSignature,
-        status: ticket.status,
-        price: ticket.price,
-        purchaseDate: ticket.purchaseDate,
-        scannedAt: ticket.scannedAt,
-        emailSent: ticket.emailSent,
-      });
+      const group = eventMap.get(eventId)
 
-      acc[eventIdStr].totalTickets++;
-      acc[eventIdStr].totalAmount += ticket.price;
+      // Add all tickets from this booking
+      for (const ticket of booking.tickets || []) {
+        const status = ticket.used
+          ? "SCANNED"
+          : new Date(event.endDate) < new Date()
+          ? "EXPIRED"
+          : "ACTIVE"
 
-      if (ticket.status === "SCANNED") {
-        acc[eventIdStr].scannedCount++;
-      } else if (ticket.status === "ACTIVE") {
-        acc[eventIdStr].activeCount++;
-      } else if (ticket.status === "EXPIRED") {
-        acc[eventIdStr].expiredCount++;
+        group.tickets.push({
+          id: ticket.ticketId,
+          qrData: JSON.stringify({
+            ticketId: ticket.ticketId,
+            bookingId: booking._id.toString(),
+            qrSignature: ticket.qrSignature,
+            eventTitle: event.title,
+          }),
+          qrSignature: ticket.qrSignature,
+          status,
+          price: group.event.ticketPrice,
+          purchaseDate: booking.createdAt,
+          scannedAt: ticket.scannedAt,
+          emailSent: booking.ticketsSent || false,
+        })
+
+        group.totalTickets++
+        group.totalAmount += group.event.ticketPrice
+
+        if (status === "SCANNED") group.scannedCount++
+        else if (status === "ACTIVE") group.activeCount++
+        else group.expiredCount++
       }
+    }
 
-      return acc;
-    }, {} as Record<string, any>);
-
-    // Convert to array
-    const ticketGroups = Object.values(groupedTickets);
+    const ticketGroups = Array.from(eventMap.values())
 
     return NextResponse.json({
       success: true,
-      totalEvents: ticketGroups.length,
-      totalTickets: tickets.length,
       ticketGroups,
-    });
-  } catch (error) {
-    console.error("Get user tickets error:", error);
+    })
+  } catch (error: any) {
+    console.error("Error fetching user tickets:", error)
     return NextResponse.json(
-      { error: "Failed to fetch tickets" },
+      { error: error.message || "Failed to fetch tickets" },
       { status: 500 }
-    );
+    )
   }
 }

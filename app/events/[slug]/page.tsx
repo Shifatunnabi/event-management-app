@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import AdPlaceholder from "@/components/ui/ad-placeholder"
 import ShareModal from "@/components/ui/share-modal"
-import BuyTicketFlow from "@/components/tickets/BuyTicketFlow"
+import BuyTicketFlowNew from "@/components/tickets/BuyTicketFlowNew"
 
 interface Event {
   id: string
@@ -32,6 +32,12 @@ interface Event {
   ticketsSold: number
   attendees: number
   isFeatured: boolean
+  ticketTypes?: {
+    name: string
+    price: number
+    available: number | null
+  }[]
+  bkashNumber?: string
 }
 
 async function getEvent(slug: string): Promise<Event | null> {
@@ -53,7 +59,7 @@ async function getEvent(slug: string): Promise<Event | null> {
   }
 }
 
-export default function EventDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+export default function EventDetailsPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params)
   const [event, setEvent] = useState<Event | null>(null)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
@@ -61,14 +67,14 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
 
   useEffect(() => {
     const fetchEvent = async () => {
-      const eventData = await getEvent(resolvedParams.id)
+      const eventData = await getEvent(resolvedParams.slug)
       if (eventData) {
         setEvent(eventData)
         setCurrentUrl(window.location.href)
       }
     }
     fetchEvent()
-  }, [resolvedParams.id])
+  }, [resolvedParams.slug])
 
   if (!event) {
     return (
@@ -191,19 +197,22 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                   Event Finished
                 </Button>
               ) : isPremium ? (
-                <BuyTicketFlow
+                <BuyTicketFlowNew
                   event={{
                     id: event.id,
+                    slug: event.slug,
                     title: event.title,
                     image: event.image,
                     date: event.date,
                     time: event.time,
                     location: event.location,
                     organizerName: event.organizer,
-                    ticketPrice: typeof event.price === 'number' ? event.price : 0,
-                    totalTickets: event.totalTickets,
-                    ticketsSold: event.ticketsSold,
-                    reservedTickets: 0,
+                    ticketTypes: event.ticketTypes || [{
+                      name: "General Admission",
+                      price: typeof event.price === 'number' ? event.price : 0,
+                      available: event.totalTickets ? event.totalTickets - event.ticketsSold : null,
+                    }],
+                    bkashNumber: event.bkashNumber,
                   }}
                   trigger={
                     <Button size="lg" className="bg-[#ff7c07] hover:bg-[#e66f06] text-white">
@@ -213,19 +222,21 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                   }
                 />
               ) : (
-                <BuyTicketFlow
+                <BuyTicketFlowNew
                   event={{
                     id: event.id,
+                    slug: event.slug,
                     title: event.title,
                     image: event.image,
                     date: event.date,
                     time: event.time,
                     location: event.location,
                     organizerName: event.organizer,
-                    ticketPrice: 0,
-                    totalTickets: event.totalTickets,
-                    ticketsSold: event.ticketsSold,
-                    reservedTickets: 0,
+                    ticketTypes: event.ticketTypes || [{
+                      name: "Free Entry",
+                      price: 0,
+                      available: event.totalTickets ? event.totalTickets - event.ticketsSold : null,
+                    }],
                   }}
                   trigger={
                     <Button size="lg" className="bg-[#ff7c07] hover:bg-[#e66f06] text-white">

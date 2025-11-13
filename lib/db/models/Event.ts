@@ -32,6 +32,9 @@ export interface IEvent extends Document {
   // Ticket types
   ticketTypes: ITicketType[]
   
+  // Payment details (for premium tickets)
+  bkashNumber?: string  // Organizer's Bkash number for receiving payments
+  
   // Status
   status: "DRAFT" | "PUBLISHED" | "ONGOING" | "COMPLETED" | "CANCELLED"
   isFeatured: boolean
@@ -129,6 +132,12 @@ const EventSchema = new Schema<IEvent>(
     ticketTypes: {
       type: [TicketTypeSchema],
       default: [],
+    },
+    
+    bkashNumber: {
+      type: String,
+      required: false,
+      trim: true,
     },
     
     status: {

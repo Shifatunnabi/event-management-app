@@ -4,24 +4,17 @@ import Event from "@/lib/db/models/Event"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     await connectDB()
 
-    const { id } = await params
+    const { slug } = await params
 
-    // Try to find by slug first, then by ID if slug fails
-    let event: any = await Event.findOne({ slug: id })
+    // Find event by slug
+    const event: any = await Event.findOne({ slug, status: { $ne: "HIDDEN" } })
       .select("-interested -going")
       .lean()
-
-    if (!event) {
-      // Fallback to ID for backward compatibility
-      event = await Event.findById(id)
-        .select("-interested -going")
-        .lean()
-    }
 
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
@@ -52,6 +45,7 @@ export async function GET(
         price: "Free",
         ticketType: ticketType,
         ticketTypes: [],
+        bkashNumber: event.bkashNumber,
         hasTicketLimit: event.hasCapacityLimit,
         totalTickets: event.totalCapacity,
         ticketsSold: event.ticketsSold,
@@ -91,6 +85,7 @@ export async function GET(
       price: minPrice === 0 ? "Free" : minPrice,
       ticketType: ticketType,
       ticketTypes: ticketTypes,
+      bkashNumber: event.bkashNumber,
       hasTicketLimit: event.hasCapacityLimit,
       totalTickets: event.totalCapacity,
       ticketsSold: event.ticketsSold,

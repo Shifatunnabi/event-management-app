@@ -240,6 +240,10 @@ export default function EventManagementPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => router.push(`/organizer/attendees/${event.slug}`)}>
+                          <Users className="mr-2 h-4 w-4" />
+                          Manage Attendees
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleEdit(event._id)}>
                           <Pencil className="mr-2 h-4 w-4" />
                           Edit
