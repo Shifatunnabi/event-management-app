@@ -133,12 +133,13 @@ export async function POST(request: NextRequest) {
     booking.tickets = tickets
     await booking.save()
 
-    // Update ticket count
+    // Update ticket count and attendees
     if (selectedTicketType.hasLimit && selectedTicketType.available !== null) {
       selectedTicketType.available -= quantity
       selectedTicketType.sold += quantity
     }
     event.ticketsSold += quantity
+    event.attendees = (event.attendees || 0) + quantity
     await event.save()
 
     // TODO: Send email with tickets (will be implemented in email service)

@@ -63,8 +63,8 @@ export default function AttendeeManagementPage() {
     }
   }
 
-  const handleEventClick = (eventId: string) => {
-    router.push(`/organizer/attendees/${eventId}`)
+  const handleEventClick = (slug: string) => {
+    router.push(`/organizer/attendees/${slug}`)
   }
 
   const getTotalAttendees = (event: Event) => {
@@ -103,7 +103,7 @@ export default function AttendeeManagementPage() {
             <Card
               key={event._id}
               className="hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => handleEventClick(event._id)}
+              onClick={() => handleEventClick(event.slug)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center gap-4">

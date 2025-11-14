@@ -20,10 +20,9 @@ interface BookingData {
 interface EventData {
   title: string
   description: string
-  startDate: Date
-  endDate: Date
+  date: Date
+  time: string
   location: string
-  venue: string
 }
 
 export async function generateTicketPDF(
@@ -56,60 +55,55 @@ export async function generateTicketPDF(
     doc.setFontSize(10)
     doc.setTextColor(100, 100, 100)
 
-    const startDate = new Date(event.startDate).toLocaleDateString("en-US", {
+    const eventDate = new Date(event.date).toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
     })
-    const startTime = new Date(event.startDate).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })
 
-    doc.text(`Date: ${startDate}`, 20, 50)
-    doc.text(`Time: ${startTime}`, 20, 58)
-    doc.text(`Venue: ${event.venue}`, 20, 66)
-    doc.text(`Location: ${event.location}`, 20, 74)
+    doc.text(`Date: ${eventDate}`, 20, 50)
+    doc.text(`Time: ${event.time}`, 20, 58)
+    doc.text(`Location: ${event.location}`, 20, 66)
 
     // Divider
     doc.setDrawColor(200, 200, 200)
-    doc.line(20, 85, 190, 85)
+    doc.line(20, 78, 190, 78)
 
     // Attendee Information
     doc.setFontSize(12)
     doc.setTextColor(0, 0, 0)
-    doc.text("Attendee Information", 20, 95)
+    doc.text("Attendee Information", 20, 88)
 
     doc.setFontSize(10)
     doc.setTextColor(100, 100, 100)
-    doc.text(`Name: ${booking.userName}`, 20, 105)
-    doc.text(`Email: ${booking.userEmail}`, 20, 113)
-    doc.text(`Phone: ${booking.userPhone}`, 20, 121)
+    doc.text(`Name: ${booking.userName}`, 20, 98)
+    doc.text(`Email: ${booking.userEmail}`, 20, 106)
+    doc.text(`Phone: ${booking.userPhone}`, 20, 114)
 
     // Divider
-    doc.line(20, 130, 190, 130)
+    doc.line(20, 123, 190, 123)
 
     // Ticket Information
     doc.setFontSize(12)
     doc.setTextColor(0, 0, 0)
-    doc.text("Ticket Information", 20, 140)
+    doc.text("Ticket Information", 20, 133)
 
     doc.setFontSize(10)
     doc.setTextColor(100, 100, 100)
-    doc.text(`Ticket ID: ${ticket.ticketId}`, 20, 150)
-    doc.text(`Ticket ${i + 1} of ${booking.numberOfTickets}`, 20, 158)
+    doc.text(`Ticket ID: ${ticket.ticketId}`, 20, 143)
+    doc.text(`Ticket ${i + 1} of ${booking.numberOfTickets}`, 20, 151)
     
     if (booking.totalAmount > 0) {
-      doc.text(`Amount Paid: ৳${booking.totalAmount.toFixed(2)}`, 20, 166)
+      doc.text(`Amount Paid: ৳${booking.totalAmount.toFixed(2)}`, 20, 159)
     } else {
-      doc.text(`Type: FREE TICKET`, 20, 166)
+      doc.text(`Type: FREE TICKET`, 20, 159)
     }
 
     // QR Code Section
     doc.setFontSize(12)
     doc.setTextColor(0, 0, 0)
-    doc.text("Scan to Verify", 105, 185, { align: "center" })
+    doc.text("Scan to Verify", 105, 178, { align: "center" })
 
     // Generate QR code
     const qrData = JSON.stringify({
@@ -129,7 +123,7 @@ export async function generateTicketPDF(
     })
 
     // Add QR code to PDF (centered)
-    doc.addImage(qrCodeDataUrl, "PNG", 70, 195, 70, 70)
+    doc.addImage(qrCodeDataUrl, "PNG", 70, 188, 70, 70)
 
     // Footer
     doc.setFontSize(8)

@@ -37,16 +37,14 @@ export async function GET(request: NextRequest) {
         eventMap.set(eventId, {
           event: {
             id: eventId,
+            slug: event.slug,
             title: event.title,
-            date: event.startDate,
-            time: new Date(event.startDate).toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
+            date: event.date,
+            time: event.time,
             location: event.location,
             locationLink: event.locationLink,
             organizerName: event.organizerName || "Event Organizer",
-            image: event.coverImage || "/images/placeholder-event.jpg",
+            image: event.image || "/images/placeholder-event.jpg",
             ticketPrice: event.ticketTypes && event.ticketTypes.length > 0
               ? event.ticketTypes[0].price || 0
               : 0,
@@ -66,7 +64,7 @@ export async function GET(request: NextRequest) {
       for (const ticket of booking.tickets || []) {
         const status = ticket.used
           ? "SCANNED"
-          : new Date(event.endDate) < new Date()
+          : new Date(event.date) < new Date()
           ? "EXPIRED"
           : "ACTIVE"
 

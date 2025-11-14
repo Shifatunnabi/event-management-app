@@ -7,7 +7,7 @@ import User from "@/lib/db/models/User"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const session = await auth()
@@ -18,7 +18,7 @@ export async function GET(
 
     await dbConnect()
 
-    const { slug } = params
+    const { slug } = await params
 
     // Find the event and verify ownership
     const event: any = await Event.findOne({ slug }).lean()

@@ -25,6 +25,7 @@ interface Event {
   category: string
   ticketType: "FREE" | "PREMIUM"
   ticketPrice?: number
+  bkashNumber?: string
   hasTicketLimit: boolean
   totalTickets?: number
 }
@@ -170,7 +171,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       }
 
       if (ticketType === "PREMIUM") {
-        Object.assign(updateData, { ticketPrice: parseFloat(formData.get("ticketPrice") as string) })
+        Object.assign(updateData, { 
+          ticketPrice: parseFloat(formData.get("ticketPrice") as string),
+          bkashNumber: formData.get("bkashNumber") as string
+        })
       }
 
       if (hasTicketLimit) {
@@ -420,21 +424,42 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               </div>
 
               {ticketType === "PREMIUM" && (
-                <div className="space-y-2">
-                  <Label htmlFor="ticketPrice">
-                    Ticket Price ($) <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="ticketPrice"
-                    name="ticketPrice"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    defaultValue={event.ticketPrice}
-                    required
-                  />
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="ticketPrice">
+                      Ticket Price (৳) <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="ticketPrice"
+                      name="ticketPrice"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      defaultValue={event.ticketPrice}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bkashNumber">
+                      Bkash Number (for receiving payments) <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="bkashNumber"
+                      name="bkashNumber"
+                      type="tel"
+                      placeholder="01XXXXXXXXX"
+                      pattern="^01[0-9]{9}$"
+                      maxLength={11}
+                      defaultValue={event.bkashNumber}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Enter the Bkash number where you want to receive ticket payments
+                    </p>
+                  </div>
+                </>
               )}
             </div>
 

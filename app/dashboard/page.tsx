@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast"
 interface TicketGroup {
   event: {
     id: string
+    slug: string
     title: string
     date: string
     time: string
@@ -572,7 +573,7 @@ export default function DashboardPage() {
                         <QrCode className="mr-2 h-4 w-4" />
                         View Tickets
                       </Button>
-                      <Link href={`/events/${group.event.id}`} className="flex-1">
+                      <Link href={`/events/${group.event.slug}`} className="flex-1">
                         <Button variant="outline" className="w-full bg-transparent">
                           Event Details
                         </Button>

@@ -4,7 +4,6 @@ import dbConnect from "@/lib/db/mongodb"
 import TicketBooking from "@/lib/db/models/TicketBooking"
 import Event from "@/lib/db/models/Event"
 import User from "@/lib/db/models/User"
-import crypto from "crypto"
 import { generateTicketPDF } from "@/lib/utils/pdf-generator"
 import { sendTicketEmail } from "@/lib/email/ticket-email"
 
@@ -43,32 +42,20 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    // Only allow sending tickets for PENDING bookings
-    if (booking.status !== "PENDING") {
+    // Only allow resending for CONFIRMED bookings
+    if (booking.status !== "CONFIRMED") {
       return NextResponse.json(
-        { error: "Can only send tickets for pending bookings" },
+        { error: "Can only resend email for confirmed bookings" },
         { status: 400 }
       )
     }
 
-    // Generate tickets if they don't exist
+    // Check if tickets exist
     if (!booking.tickets || booking.tickets.length === 0) {
-      const tickets = []
-      for (let i = 0; i < booking.numberOfTickets; i++) {
-        const ticketId = `TKT-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`
-        const qrSignature = crypto
-          .createHash("sha256")
-          .update(`${ticketId}-${booking._id}-${Date.now()}`)
-          .digest("hex")
-
-        tickets.push({
-          ticketId,
-          ticketType: booking.ticketType,
-          qrCode: qrSignature,
-          qrSignature,
-        })
-      }
-      booking.tickets = tickets
+      return NextResponse.json(
+        { error: "No tickets found for this booking" },
+        { status: 400 }
+      )
     }
 
     // Generate PDF
@@ -91,7 +78,7 @@ export async function POST(
       }
     )
 
-    // Send email with PDF (with 3 retries)
+    // Send email with PDF
     try {
       await sendTicketEmail(
         booking.userEmail,
@@ -110,29 +97,17 @@ export async function POST(
       )
 
       // Update booking status
-      booking.status = "CONFIRMED"
       booking.ticketsSent = true
       booking.emailSentAt = new Date()
-      booking.confirmedAt = new Date()
+      booking.emailRetryCount = (booking.emailRetryCount || 0) + 1
       await booking.save()
 
-      // Update event ticket counts and attendees
-      if (event.ticketTypes && event.ticketTypes.length > 0) {
-        const ticketType = event.ticketTypes.find((t: any) => t.name === booking.ticketType)
-        if (ticketType && ticketType.hasLimit) {
-          ticketType.sold = (ticketType.sold || 0) + booking.numberOfTickets
-        }
-      }
-      event.ticketsSold = (event.ticketsSold || 0) + booking.numberOfTickets
-      event.attendees = (event.attendees || 0) + booking.numberOfTickets
-      await event.save()
-
       return NextResponse.json({
-        message: "Tickets sent successfully",
+        message: "Email sent successfully",
         booking: {
           _id: booking._id.toString(),
-          status: booking.status,
           ticketsSent: booking.ticketsSent,
+          emailSentAt: booking.emailSentAt,
         },
       })
     } catch (emailError: any) {
@@ -144,40 +119,23 @@ export async function POST(
         userEmail: booking.userEmail,
       })
       
-      // Still update to CONFIRMED but mark email as not sent
-      booking.status = "CONFIRMED"
-      booking.ticketsSent = false
-      booking.emailRetryCount = (booking.emailRetryCount || 0) + 3
-      booking.confirmedAt = new Date()
+      // Update retry count
+      booking.emailRetryCount = (booking.emailRetryCount || 0) + 1
       await booking.save()
-
-      // Update event ticket counts and attendees even if email fails
-      if (event.ticketTypes && event.ticketTypes.length > 0) {
-        const ticketType = event.ticketTypes.find((t: any) => t.name === booking.ticketType)
-        if (ticketType && ticketType.hasLimit) {
-          ticketType.sold = (ticketType.sold || 0) + booking.numberOfTickets
-        }
-      }
-      event.ticketsSold = (event.ticketsSold || 0) + booking.numberOfTickets
-      event.attendees = (event.attendees || 0) + booking.numberOfTickets
-      await event.save()
 
       return NextResponse.json(
         {
-          error: "Tickets confirmed but email failed to send. Please try resending.",
-          booking: {
-            _id: booking._id.toString(),
-            status: booking.status,
-            ticketsSent: booking.ticketsSent,
-          },
+          error: "Failed to send email. Please try again.",
+          details: emailError.message,
+          code: emailError.code,
         },
         { status: 500 }
       )
     }
   } catch (error: any) {
-    console.error("Error sending ticket:", error)
+    console.error("Error resending email:", error)
     return NextResponse.json(
-      { error: error.message || "Failed to send ticket" },
+      { error: error.message || "Failed to resend email" },
       { status: 500 }
     )
   }

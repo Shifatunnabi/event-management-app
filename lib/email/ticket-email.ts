@@ -4,14 +4,33 @@ import nodemailer from "nodemailer"
 // You'll need to set these environment variables:
 // EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD
 
+// Debug logging for SMTP configuration
+console.log("SMTP Configuration:", {
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: process.env.SMTP_SECURE === "true",
+  user: process.env.SMTP_USER,
+  hasPassword: !!process.env.SMTP_PASS,
+  passwordLength: process.env.SMTP_PASS?.length,
+})
+
+const port = parseInt(process.env.SMTP_PORT || "587")
+const isSecure = process.env.SMTP_SECURE === "true"
+
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || "smtp.gmail.com",
-  port: parseInt(process.env.EMAIL_PORT || "587"),
-  secure: false, // true for 465, false for other ports
+  host: process.env.SMTP_HOST || "smtp.gmail.com",
+  port: port,
+  secure: isSecure, // true for 465, false for other ports
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
+  tls: {
+    ciphers: 'SSLv3',
+    rejectUnauthorized: false,
+  },
+  debug: true,
+  logger: true,
 })
 
 interface EmailOptions {
@@ -36,7 +55,7 @@ export async function sendEmailWithRetry(
       console.log(`Attempt ${attempt} to send email to ${options.to}`)
 
       const info = await transporter.sendMail({
-        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+        from: `${process.env.FROM_NAME || "EventGhor"} <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
         to: options.to,
         subject: options.subject,
         html: options.html,
@@ -46,7 +65,13 @@ export async function sendEmailWithRetry(
       console.log(`Email sent successfully: ${info.messageId}`)
       return true
     } catch (error: any) {
-      console.error(`Email attempt ${attempt} failed:`, error.message)
+      console.error(`Email attempt ${attempt} failed:`, {
+        message: error.message,
+        code: error.code,
+        command: error.command,
+        response: error.response,
+        responseCode: error.responseCode,
+      })
       lastError = error
 
       // Wait before retrying (exponential backoff)
@@ -67,7 +92,10 @@ export async function sendTicketEmail(
   userName: string,
   eventTitle: string,
   numberOfTickets: number,
-  pdfBuffer: Buffer
+  pdfBuffer: Buffer,
+  eventDate?: string,
+  eventTime?: string,
+  eventLocation?: string
 ): Promise<boolean> {
   const html = `
     <!DOCTYPE html>
@@ -85,7 +113,7 @@ export async function sendTicketEmail(
           padding: 20px;
         }
         .header {
-          background-color: #4F46E5;
+          background-color: #ff7c07;
           color: white;
           padding: 20px;
           text-align: center;
@@ -100,7 +128,7 @@ export async function sendTicketEmail(
           background-color: white;
           padding: 20px;
           margin: 20px 0;
-          border-left: 4px solid #4F46E5;
+          border-left: 4px solid #ff7c07;
           border-radius: 4px;
         }
         .footer {
@@ -123,7 +151,7 @@ export async function sendTicketEmail(
     <body>
       <div class="container">
         <div class="header">
-          <h1>Your Event Tickets</h1>
+          <h1>Event Tickets</h1>
         </div>
         <div class="content">
           <p>Dear ${userName},</p>
@@ -134,23 +162,22 @@ export async function sendTicketEmail(
             <h3>Booking Details</h3>
             <p><strong>Number of Tickets:</strong> ${numberOfTickets}</p>
             <p><strong>Event:</strong> ${eventTitle}</p>
+            ${eventDate ? `<p><strong>Date:</strong> ${eventDate}</p>` : ''}
+            ${eventTime ? `<p><strong>Time:</strong> ${eventTime}</p>` : ''}
+            ${eventLocation ? `<p><strong>Location:</strong> ${eventLocation}</p>` : ''}
           </div>
           
-          <p>Your tickets are attached as a PDF file to this email. Please:</p>
-          <ul>
-            <li>Download and save the PDF on your device</li>
-            <li>Bring the tickets (digital or printed) to the event</li>
-            <li>Present the QR code at the entrance for scanning</li>
-          </ul>
-          
+          <p>Tickets are attached as a PDF file to this email.</p>
+
           <p><strong>Important:</strong> Each ticket has a unique QR code. Do not share your tickets with others.</p>
           
-          <p>We look forward to seeing you at the event!</p>
-          
+          <p>We are looking forward to seeing you at the ${eventTitle}!</p>
+
           <div class="footer">
             <p>This is an automated email. Please do not reply to this message.</p>
-            <p>If you have any questions, please contact the event organizer.</p>
           </div>
+          
+         
         </div>
       </div>
     </body>
@@ -159,7 +186,7 @@ export async function sendTicketEmail(
 
   return await sendEmailWithRetry({
     to: userEmail,
-    subject: `Your Tickets for ${eventTitle}`,
+    subject: `Tickets for ${eventTitle}`,
     html,
     attachments: [
       {
