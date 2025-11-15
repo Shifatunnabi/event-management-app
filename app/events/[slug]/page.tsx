@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import AdPlaceholder from "@/components/ui/ad-placeholder"
 import ShareModal from "@/components/ui/share-modal"
 import BuyTicketFlowNew from "@/components/tickets/BuyTicketFlowNew"
+import LoadingScreen from "@/components/ui/loading-screen"
 
 interface Event {
   id: string
@@ -76,10 +77,13 @@ export default function EventDetailsPage({ params }: { params: Promise<{ slug: s
     fetchEvent()
   }, [resolvedParams.slug])
 
+
+
+  
   if (!event) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-muted-foreground">Loading event...</p>
+        <LoadingScreen />
       </div>
     )
   }

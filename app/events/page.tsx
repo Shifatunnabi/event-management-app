@@ -7,6 +7,7 @@ import EventCard from "@/components/home/event-card"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import OrganizerCTA from "@/components/organizer-cta"
+import LoadingScreen from "@/components/ui/loading-screen"
 
 const EVENTS_PER_PAGE = 9
 
@@ -104,7 +105,7 @@ export default function EventsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-muted-foreground">Loading events...</p>
+        <LoadingScreen />
       </div>
     )
   }

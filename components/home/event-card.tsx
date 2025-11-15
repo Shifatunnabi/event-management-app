@@ -52,7 +52,7 @@ export default function EventCard({ event }: EventCardProps) {
               <div className="flex items-center gap-2">
                 <Ticket className="h-4 w-4 shrink-0 text-green-600" />
                 <span className="font-semibold text-gray-900">
-                  {event.price === "Free" ? "Free Entry" : `Price starts from $${event.price}`}
+                  {event.price === "Free" ? "Free Entry" : `${event.price} BDT`}
                 </span>
               </div>
             </div>
