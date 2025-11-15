@@ -154,7 +154,6 @@ const TicketBookingSchema = new Schema<ITicketBooking>(
     transactionId: {
       type: String,
       trim: true,
-      sparse: true,  // Allows null/undefined but enforces uniqueness when present
     },
     
     status: {
@@ -203,7 +202,6 @@ TicketBookingSchema.index({ eventSlug: 1, status: 1 })
 TicketBookingSchema.index({ userId: 1, status: 1 })
 TicketBookingSchema.index({ transactionId: 1 }, { unique: true, sparse: true }) // Global uniqueness
 TicketBookingSchema.index({ status: 1, expiresAt: 1 }) // For cleanup queries
-TicketBookingSchema.index({ "tickets.qrSignature": 1 }) // For QR validation
 
 const TicketBooking = models.TicketBooking || model<ITicketBooking>("TicketBooking", TicketBookingSchema)
 

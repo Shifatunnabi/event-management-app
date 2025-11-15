@@ -51,12 +51,13 @@ class SimpleEmailQueue {
 
       try {
         // Dynamic import to avoid circular dependencies
-        const { sendTicketEmail } = await import("@/lib/email/ticketEmail");
+        const { sendTicketEmail } = await import("@/lib/email/ticket-email");
         await sendTicketEmail(
           job.data.userEmail,
           job.data.userName,
-          job.data.tickets,
-          job.data.eventDetails
+          job.data.eventDetails.title,
+          job.data.tickets.length,
+          job.data.pdfBuffer
         );
 
         job.status = "completed";

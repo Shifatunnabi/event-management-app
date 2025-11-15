@@ -117,7 +117,6 @@ const TicketSchema = new Schema<ITicket>(
     qrSignature: {
       type: String,
       required: true,
-      unique: true,
     },
     
     status: {
@@ -151,7 +150,7 @@ const TicketSchema = new Schema<ITicket>(
 // Indexes
 TicketSchema.index({ userId: 1, eventId: 1 })
 TicketSchema.index({ eventId: 1, status: 1 })
-TicketSchema.index({ qrSignature: 1 })
+TicketSchema.index({ qrSignature: 1 }, { unique: true }) // QR signature must be unique
 TicketSchema.index({ orderId: 1 })
 
 const Ticket = models.Ticket || model<ITicket>("Ticket", TicketSchema)
