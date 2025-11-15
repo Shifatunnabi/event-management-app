@@ -473,6 +473,7 @@ export default function BuyTicketFlowNew({
             <div className="flex items-start gap-2 p-3 bg-muted rounded-lg">
               <Checkbox
                 id="terms"
+                className="bg-white border border-black"
                 checked={agreedToTerms}
                 onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
               />
