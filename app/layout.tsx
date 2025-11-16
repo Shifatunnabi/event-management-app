@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import { Toaster } from "react-hot-toast"
 import "./globals.css"
 import Header from "@/components/layout/header"
 import Footer from "@/components/layout/footer"
@@ -26,6 +27,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} bg-white`}>
         <AuthProvider>
+          <Toaster />
           <AppLoader>
             <Header />
             <main className="min-h-screen pt-20 pb-20 md:pb-0 bg-white">

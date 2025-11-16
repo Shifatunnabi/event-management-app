@@ -26,6 +26,8 @@ interface Event {
   category: string
   organizer: string
   organizationName?: string
+  organizerEmail?: string
+  organizerPhone?: string
   price: number | "Free"
   ticketType: "FREE" | "PREMIUM"
   hasTicketLimit: boolean
@@ -326,6 +328,12 @@ export default function EventDetailsPage({ params }: { params: Promise<{ slug: s
                     <p className="text-sm font-semibold text-gray-900">{event.organizer}</p>
                     {event.organizationName && (
                       <p className="text-xs text-muted-foreground mt-0.5">{event.organizationName}</p>
+                    )}
+                    {event.organizerEmail && (
+                      <p className="text-xs text-muted-foreground mt-1">Email: {event.organizerEmail}</p>
+                    )}
+                    {event.organizerPhone && (
+                      <p className="text-xs text-muted-foreground">Phone: {event.organizerPhone}</p>
                     )}
                   </div>
 

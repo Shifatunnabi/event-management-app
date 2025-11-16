@@ -19,7 +19,8 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
     if (status === "loading") return
 
     if (status === "unauthenticated" || !session?.user) {
-      router.push("/auth/signin")
+      const currentPath = window.location.pathname
+      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(currentPath)}`)
       return
     }
 

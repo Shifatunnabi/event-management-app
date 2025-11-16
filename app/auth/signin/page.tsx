@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,10 +14,12 @@ import { AlertCircle } from "lucide-react"
 
 export default function SignInPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const callbackUrl = searchParams.get("callbackUrl") || "/"
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,8 +43,8 @@ export default function SignInPage() {
         }
         setLoading(false)
       } else {
-        // Success - redirect to home
-        router.push("/")
+        // Success - redirect to callback URL
+        router.push(callbackUrl)
         router.refresh()
       }
     } catch (err) {
@@ -101,7 +103,7 @@ export default function SignInPage() {
 
             <div className="text-center text-sm">
               Don't have an account?{" "}
-              <Link href="/register" className="font-semibold text-[#ff7c07] hover:text-[#e66f06]">
+              <Link href={`/auth/signup/user?callbackUrl=${encodeURIComponent(callbackUrl)}`} className="font-semibold text-[#ff7c07] hover:text-[#e66f06]">
                 Sign up
               </Link> 
             </div>

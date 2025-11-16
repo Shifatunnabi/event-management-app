@@ -41,6 +41,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
+    // Check if user already has tickets for this event
+    const existingBooking = await TicketBooking.findOne({
+      userId: user._id,
+      eventSlug,
+      status: { $in: ["RESERVED", "PENDING", "CONFIRMED"] },
+    })
+
+    if (existingBooking) {
+      return NextResponse.json(
+        { error: "You have already purchased tickets for this event" },
+        { status: 400 }
+      )
+    }
+
     // Find event
     const event = await Event.findById(eventId)
     if (!event) {

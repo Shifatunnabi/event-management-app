@@ -156,7 +156,14 @@ export default function RegisterPage() {
       </div>
 
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-2">
+          <p className="text-center text-sm text-muted-foreground mb-6">
+              Already have an account?{" "}
+              <a href="/auth/signin" className="text-[#ff7c07] hover:underline font-bold">
+                Sign in here
+              </a>
+          </p>
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Common Fields */}
             <div className="space-y-2">
@@ -281,12 +288,7 @@ export default function RegisterPage() {
               {isLoading ? "Creating Account..." : "Create Account"}
             </Button>
 
-            <p className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <a href="/auth/signin" className="text-primary hover:underline">
-                Sign in here
-              </a>
-            </p>
+            
           </form>
         </CardContent>
       </Card>
