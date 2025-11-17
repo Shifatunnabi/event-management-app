@@ -19,7 +19,9 @@ interface Event {
   description: string
   image: string
   date: string
-  time: string
+  time?: string
+  startTime?: string
+  endTime?: string
   location: string
   locationLink?: string
   category: string
@@ -45,6 +47,24 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [hasTicketLimit, setHasTicketLimit] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Helper function to convert 12-hour format with AM/PM to 24-hour format
+  const convertTo24Hour = (time12h: string): string => {
+    if (!time12h) return ''
+    
+    const [time, modifier] = time12h.split(' ')
+    let [hours, minutes] = time.split(':')
+    
+    if (hours === '12') {
+      hours = '00'
+    }
+    
+    if (modifier === 'PM') {
+      hours = String(parseInt(hours, 10) + 12)
+    }
+    
+    return `${hours.padStart(2, '0')}:${minutes}`
+  }
+
   useEffect(() => {
     fetchEvent()
   }, [resolvedParams.id])
@@ -52,7 +72,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const fetchEvent = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/events/${resolvedParams.id}`)
+      const response = await fetch(`/api/organizers/events/${resolvedParams.id}`)
       const data = await response.json()
 
       if (data.success && data.event) {
@@ -69,7 +89,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           description: "Event not found",
           variant: "destructive",
         })
-        router.push("/organizer/events")
+        router.push("/organizer/attendees")
       }
     } catch (error) {
       console.error("Error fetching event:", error)
@@ -78,7 +98,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         description: "Failed to load event",
         variant: "destructive",
       })
-      router.push("/organizer/events")
+      router.push("/organizer/attendees")
     } finally {
       setIsLoading(false)
     }
@@ -157,12 +177,25 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
       const formData = new FormData(e.currentTarget)
       
+      // Helper function to convert 24-hour time to 12-hour format with AM/PM
+      const convertTo12Hour = (time24: string): string => {
+        const [hours, minutes] = time24.split(':')
+        const hour = parseInt(hours, 10)
+        const ampm = hour >= 12 ? 'PM' : 'AM'
+        const hour12 = hour % 12 || 12
+        return `${hour12}:${minutes} ${ampm}`
+      }
+
+      const startTime = formData.get("startTime") as string
+      const endTime = formData.get("endTime") as string
+
       const updateData = {
         title: formData.get("title"),
         description: description,
         image: uploadedImageUrl,
         date: formData.get("date"),
-        time: formData.get("time"),
+        startTime: startTime ? convertTo12Hour(startTime) : undefined,
+        endTime: endTime ? convertTo12Hour(endTime) : undefined,
         location: formData.get("location"),
         locationLink: formData.get("locationLink"),
         category: formData.get("category"),
@@ -198,7 +231,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         description: "Event updated successfully",
       })
 
-      router.push("/organizer/events")
+      router.push("/organizer/attendees")
       router.refresh()
     } catch (error) {
       console.error("Error updating event:", error)
@@ -312,7 +345,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
             </div>
 
             {/* Event Date & Time */}
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="date">
                   Event Date <span className="text-red-500">*</span>
@@ -325,17 +358,31 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="time">
-                  Event Time <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="time"
-                  name="time"
-                  type="time"
-                  defaultValue={event.time}
-                  required
-                />
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="startTime">
+                    Start Time <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="startTime"
+                    name="startTime"
+                    type="time"
+                    defaultValue={event.startTime ? convertTo24Hour(event.startTime) : ''}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endTime">
+                    End Time <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="endTime"
+                    name="endTime"
+                    type="time"
+                    defaultValue={event.endTime ? convertTo24Hour(event.endTime) : ''}
+                    required
+                  />
+                </div>
               </div>
             </div>
 

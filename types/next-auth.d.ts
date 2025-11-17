@@ -7,6 +7,7 @@ declare module "next-auth" {
     role: string
     organizerStatus?: string
     organizationName?: string
+    profileImage?: string
   }
 
   interface Session {
@@ -18,6 +19,7 @@ declare module "next-auth" {
       role: string
       organizerStatus?: string
       organizationName?: string
+      profileImage?: string
     }
   }
 }
@@ -28,5 +30,6 @@ declare module "next-auth/jwt" {
     role: string
     organizerStatus?: string
     organizationName?: string
+    profileImage?: string
   }
 }

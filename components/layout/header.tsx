@@ -114,9 +114,9 @@ export default function Header() {
 
                 {/* User Dropdown or Organizer Dropdown */}
                 {user?.role === "ORGANIZER" && user?.organizerStatus === "APPROVED" ? (
-                  <OrganizerDropdown userName={user.name || ""} organizationName={user.organizationName} />
+                  <OrganizerDropdown userName={user.name || ""} organizationName={user.organizationName} userImage={(user as any).profileImage} />
                 ) : user?.role === "USER" || user?.role === "SUPER_ADMIN" ? (
-                  <UserDropdown userName={user.name || ""} />
+                  <UserDropdown userName={user.name || ""} userImage={(user as any).profileImage} />
                 ) : null}
               </>
             )}
@@ -164,9 +164,9 @@ export default function Header() {
 
                 {/* User Dropdown or Organizer Dropdown */}
                 {user?.role === "ORGANIZER" && user?.organizerStatus === "APPROVED" ? (
-                  <OrganizerDropdown userName={user.name || ""} organizationName={user.organizationName} />
+                  <OrganizerDropdown userName={user.name || ""} organizationName={user.organizationName} userImage={(user as any).profileImage} />
                 ) : user?.role === "USER" || user?.role === "SUPER_ADMIN" ? (
-                  <UserDropdown userName={user.name || ""} />
+                  <UserDropdown userName={user.name || ""} userImage={(user as any).profileImage} />
                 ) : null}
               </>
             )}

@@ -9,6 +9,7 @@ import MobileNav from "@/components/layout/mobile-nav"
 import AppLoader from "@/components/app-loader"
 import LayoutWrapper from "@/components/layout/layout-wrapper"
 import { AuthProvider } from "@/components/auth/auth-provider"
+import PopupAdDisplay from "@/components/ads/popup-ad-display"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -35,6 +36,7 @@ export default function RootLayout({
             </main>
             <Footer />
             <MobileNav />
+            <PopupAdDisplay />
           </AppLoader>
         </AuthProvider>
       </body>

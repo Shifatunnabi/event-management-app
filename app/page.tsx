@@ -16,6 +16,7 @@ import EventFilters from "@/components/home/event-filters"
 import BreakoutSection from "@/components/layout/breakout-section"
 import { useState, useMemo, useEffect } from "react"
 import AdPlaceholder from "@/components/ui/ad-placeholder"
+import StaticAdDisplay from "@/components/ads/static-ad-display"
 
 interface Event {
   id: string
@@ -149,14 +150,9 @@ export default function Home() {
         </div>
       </section>
 
-       {/* Full Width Ad Space */}
+       {/* Static Ad Space After Events */}
       <div className="mb-12">
-        <AdPlaceholder 
-          size="banner"
-          height={200}
-          title="Premium Ad Space"
-          className="w-full"
-        />
+        <StaticAdDisplay className="w-full h-[250px] md:h-[300px]" />
       </div>
 
       <BreakoutSection className="bg-gray-200/30">

@@ -3,7 +3,7 @@
 import { use, useState, useEffect } from "react"
 import Image from "next/image"
 import { notFound } from "next/navigation"
-import { Calendar, MapPin, Users, Share2, Ticket } from "lucide-react"
+import { Calendar, MapPin, Users, Share2, Ticket, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -12,6 +12,8 @@ import AdPlaceholder from "@/components/ui/ad-placeholder"
 import ShareModal from "@/components/ui/share-modal"
 import BuyTicketFlowNew from "@/components/tickets/BuyTicketFlowNew"
 import LoadingScreen from "@/components/ui/loading-screen"
+import StaticAdDisplay from "@/components/ads/static-ad-display"
+
 
 interface Event {
   id: string
@@ -20,7 +22,9 @@ interface Event {
   description: string
   image: string
   date: string
-  time: string
+  time?: string
+  startTime?: string
+  endTime?: string
   location: string
   locationLink?: string
   category: string
@@ -189,10 +193,12 @@ export default function EventDetailsPage({ params }: { params: Promise<{ slug: s
                   <MapPin className="h-4 w-4 text-[#ff7c07]" />
                   <span className="text-sm">{event.location}</span>
                 </div>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Users className="h-4 w-4 text-[#ff7c07]" />
-                  <span className="text-sm">{event.attendees.toLocaleString()} attending</span>
-                </div>
+                {event.startTime && event.endTime && (
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Clock className="h-4 w-4 text-[#ff7c07]" />
+                    <span className="text-sm">{event.startTime} - {event.endTime}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -210,7 +216,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ slug: s
                     title: event.title,
                     image: event.image,
                     date: event.date,
-                    time: event.time,
+                    time: event.time || (event.startTime && event.endTime ? `${event.startTime} - ${event.endTime}` : ''),
                     location: event.location,
                     organizerName: event.organizer,
                     ticketTypes: event.ticketTypes || [{
@@ -235,7 +241,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ slug: s
                     title: event.title,
                     image: event.image,
                     date: event.date,
-                    time: event.time,
+                    time: event.time || (event.startTime && event.endTime ? `${event.startTime} - ${event.endTime}` : ''),
                     location: event.location,
                     organizerName: event.organizer,
                     ticketTypes: event.ticketTypes || [{
@@ -263,14 +269,9 @@ export default function EventDetailsPage({ params }: { params: Promise<{ slug: s
             </div>
           </div>
 
-          {/* Right Side - Small Ad Space (2 columns) */}
+          {/* Right Side - Static Ad Space (2 columns) */}
           <div className="lg:col-span-2 flex justify-center lg:justify-end">
-            <AdPlaceholder 
-              width={450} 
-              height={150} 
-              title="Premium Ad Space"
-              className="max-w-full"
-            />
+            <StaticAdDisplay className="w-full max-w-[450px] h-[150px]" />
           </div>
         </div>
 
@@ -314,7 +315,17 @@ export default function EventDetailsPage({ params }: { params: Promise<{ slug: s
                       Date & Time
                     </div>
                     <p className="text-sm text-muted-foreground">{formattedDate}</p>
-                    <p className="text-sm text-muted-foreground">{event.time}</p>
+                    {event.startTime && event.endTime ? (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {event.startTime} - {event.endTime}
+                      </p>
+                    ) : event.time ? (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {event.time}
+                      </p>
+                    ) : null}
                   </div>
 
                   <Separator />
@@ -384,14 +395,9 @@ export default function EventDetailsPage({ params }: { params: Promise<{ slug: s
           </div>
         </div>
 
-        {/* Full Width Ad Space */}
+        {/* Full Width Static Ad Space After Description */}
         <div className="mt-12">
-          <AdPlaceholder 
-            size="banner"
-            height={200}
-            title="Large Banner Ad Space"
-            className="w-full"
-          />
+          <StaticAdDisplay className="w-full h-[250px] md:h-[300px]" />
         </div>
       </div>
     </div>
