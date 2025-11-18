@@ -1,3 +1,6 @@
+"use client"
+
+import { use, useState, useEffect } from "react"
 import Image from "next/image"
 import { notFound } from "next/navigation"
 import { Calendar, MapPin, Users, Share2, Ticket, Clock } from "lucide-react"
@@ -44,94 +47,42 @@ interface EventType {
   bkashNumber?: string
 }
 
-async function getEvent(slug: string): Promise<EventType | null> {
-  try {
-    await connectDB()
+export default function EventDetailsPage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = use(params)
+  const [event, setEvent] = useState<EventType | null>(null)
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
+  const [currentUrl, setCurrentUrl] = useState("")
 
-    const event: any = await Event.findOne({ slug, status: { $ne: "HIDDEN" } })
-      .select("-interested -going")
-      .lean()
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+        const response = await fetch(`${baseUrl}/api/events/${resolvedParams.slug}`, {
+          cache: "no-store",
+        })
 
-    if (!event) {
-      return null
-    }
+        if (!response.ok) {
+          return null
+        }
 
-    // Determine ticket type based on ticket prices
-    const ticketTypes = event.ticketTypes || []
-    
-    // If no ticket types, it's a free event
-    if (ticketTypes.length === 0) {
-      return {
-        id: event._id.toString(),
-        slug: event.slug,
-        title: event.title,
-        description: event.description,
-        image: event.image,
-        date: event.date.toISOString().split("T")[0],
-        time: event.time,
-        location: event.location,
-        locationLink: event.locationLink,
-        category: event.category,
-        organizer: event.organizerName,
-        organizationName: event.organizationName,
-        price: "Free",
-        ticketType: "FREE",
-        ticketTypes: [],
-        bkashNumber: event.bkashNumber,
-        hasTicketLimit: event.hasCapacityLimit,
-        totalTickets: event.totalCapacity,
-        ticketsSold: event.ticketsSold || 0,
-        attendees: event.attendees || 0,
-        isFeatured: event.isFeatured || false,
+        const data = await response.json()
+        if (data.success && data.event) {
+          setEvent(data.event)
+          setCurrentUrl(window.location.href)
+        }
+      } catch (error) {
+        console.error("Error fetching event:", error)
       }
     }
-
-    // Has ticket types - determine if FREE or PREMIUM
-    const hasAnyPaid = ticketTypes.some((t: any) => t.price > 0)
-    const ticketType = hasAnyPaid ? "PREMIUM" : "FREE"
-    const minPrice = Math.min(...ticketTypes.map((t: any) => t.price))
-
-    const transformedTicketTypes = ticketTypes.map((t: any) => ({
-      name: t.name,
-      price: t.price,
-      available: t.hasLimit ? t.available : null,
-    }))
-
-    return {
-      id: event._id.toString(),
-      slug: event.slug,
-      title: event.title,
-      description: event.description,
-      image: event.image,
-      date: event.date.toISOString().split("T")[0],
-      time: event.time,
-      location: event.location,
-      locationLink: event.locationLink,
-      category: event.category,
-      organizer: event.organizerName,
-      organizationName: event.organizationName,
-      price: minPrice === 0 ? "Free" : minPrice,
-      ticketType: ticketType,
-      ticketTypes: transformedTicketTypes,
-      bkashNumber: event.bkashNumber,
-      hasTicketLimit: event.hasCapacityLimit,
-      totalTickets: event.totalCapacity,
-      ticketsSold: event.ticketsSold || 0,
-      attendees: event.attendees || 0,
-      isFeatured: event.isFeatured || false,
-    }
-  } catch (error) {
-    console.error("Error fetching event:", error)
-    return null
-  }
-}
-
-export default async function EventDetailsPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
-  const event = await getEvent(slug)
+    fetchEvent()
+  }, [resolvedParams.slug])
 
   if (!event) {
-    notFound()
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingScreen />
+      </div>
+    )
   }
 
   const formattedDate = new Date(event.date).toLocaleDateString("en-US", {
