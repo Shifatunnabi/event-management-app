@@ -56,19 +56,21 @@ export default function EventDetailsPage({ params }: { params: Promise<{ slug: s
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-        const response = await fetch(`${baseUrl}/api/events/${resolvedParams.slug}`, {
+        const response = await fetch(`/api/events/${resolvedParams.slug}`, {
           cache: "no-store",
         })
 
         if (!response.ok) {
-          return null
+          console.error("Failed to fetch event:", response.status, response.statusText)
+          return
         }
 
         const data = await response.json()
         if (data.success && data.event) {
           setEvent(data.event)
           setCurrentUrl(window.location.href)
+        } else {
+          console.error("Event data not found in response")
         }
       } catch (error) {
         console.error("Error fetching event:", error)
