@@ -51,23 +51,23 @@ export default function Footer() {
             <h3 className="mb-4 text-lg font-semibold">Support</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/help" className="text-white/70 hover:text-white">
-                  Help Center
-                </Link>
-              </li>
-              <li>
                 <Link href="/contact" className="text-white/70 hover:text-white">
                   Contact Us
                 </Link>
               </li>
               <li>
                 <Link href="/terms" className="text-white/70 hover:text-white">
-                  Terms of Service
+                  Terms & Conditions
                 </Link>
               </li>
               <li>
                 <Link href="/privacy" className="text-white/70 hover:text-white">
                   Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/refund-policy" className="text-white/70 hover:text-white">
+                  Refund Policy
                 </Link>
               </li>
             </ul>
@@ -77,7 +77,7 @@ export default function Footer() {
           <div>
             <h3 className="mb-4 text-lg font-semibold">Follow Us</h3>
             <div className="flex gap-4">
-              <Link href="#" className="text-white/70 transition-colors hover:text-white">
+              <Link href="https://www.facebook.com/EventGhorBD" target="_blank" rel="noopener noreferrer" className="text-white/70 transition-colors hover:text-white">
                 <Facebook className="h-5 w-5" />
               </Link>
               <Link href="#" className="text-white/70 transition-colors hover:text-white">

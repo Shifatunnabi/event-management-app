@@ -2,9 +2,26 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Search, Loader2, Calendar, MapPin, Users } from "lucide-react"
+import { Search, Loader2, Calendar, MapPin, Users, MoreVertical, Pencil, Trash2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 
 interface Event {
@@ -12,7 +29,9 @@ interface Event {
   title: string
   slug: string
   date: string
-  time: string
+  time?: string
+  startTime?: string
+  endTime?: string
   location: string
   interested: string[]
   going: string[]
@@ -25,6 +44,8 @@ export default function AttendeeManagementPage() {
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
+  const [deleteEventId, setDeleteEventId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     fetchEvents()
@@ -65,6 +86,48 @@ export default function AttendeeManagementPage() {
 
   const handleEventClick = (slug: string) => {
     router.push(`/organizer/attendees/${slug}`)
+  }
+
+  const handleEdit = (eventId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    router.push(`/organizer/edit-event/${eventId}`)
+  }
+
+  const handleDeleteClick = (eventId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setDeleteEventId(eventId)
+  }
+
+  const handleDelete = async () => {
+    if (!deleteEventId) return
+
+    try {
+      setIsDeleting(true)
+      const response = await fetch(`/api/organizers/events/${deleteEventId}`, {
+        method: "DELETE",
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast({
+          title: "Success",
+          description: "Event deleted successfully",
+        })
+        fetchEvents()
+      } else {
+        throw new Error(data.error)
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete event",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+      setDeleteEventId(null)
+    }
   }
 
   const getTotalAttendees = (event: Event) => {
@@ -125,6 +188,12 @@ export default function AttendeeManagementPage() {
                         <Calendar className="h-3 w-3" />
                         <span>{new Date(event.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
                       </div>
+                      {(event.startTime && event.endTime) && (
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>{event.startTime} - {event.endTime}</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
                         <span className="truncate">{event.location}</span>
@@ -134,6 +203,51 @@ export default function AttendeeManagementPage() {
                         <span>{getTotalAttendees(event)} attendees</span>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Desktop Action Buttons */}
+                  <div className="hidden md:flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => handleEdit(event._id, e)}
+                    >
+                      <Pencil className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => handleDeleteClick(event._id, e)}
+                      className="text-red-600 hover:text-red-700 hover:border-red-600"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
+
+                  {/* Mobile 3-Dot Menu */}
+                  <div className="md:hidden">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => handleEdit(event._id, e as any)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit Event
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={(e) => handleDeleteClick(event._id, e as any)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Event
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </CardContent>
@@ -152,6 +266,35 @@ export default function AttendeeManagementPage() {
           </p>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteEventId} onOpenChange={() => setDeleteEventId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this event?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the event and all associated data including attendees and tickets.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Event"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

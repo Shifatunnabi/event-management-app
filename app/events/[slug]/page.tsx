@@ -1,14 +1,16 @@
 import Image from "next/image"
 import { notFound } from "next/navigation"
-import { Calendar, MapPin, Users } from "lucide-react"
+import { Calendar, MapPin, Users, Share2, Ticket, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import AdPlaceholder from "@/components/ui/ad-placeholder"
-import EventDetailsClient from "@/components/events/EventDetailsClient"
-import connectDB from "@/lib/db/mongodb"
-import Event from "@/lib/db/models/Event"
+import ShareModal from "@/components/ui/share-modal"
+import BuyTicketFlowNew from "@/components/tickets/BuyTicketFlowNew"
+import LoadingScreen from "@/components/ui/loading-screen"
+import StaticAdDisplay from "@/components/ads/static-ad-display"
+
 
 interface EventType {
   id: string
@@ -17,12 +19,16 @@ interface EventType {
   description: string
   image: string
   date: string
-  time: string
+  time?: string
+  startTime?: string
+  endTime?: string
   location: string
   locationLink?: string
   category: string
   organizer: string
   organizationName?: string
+  organizerEmail?: string
+  organizerPhone?: string
   price: number | "Free"
   ticketType: "FREE" | "PREMIUM"
   hasTicketLimit: boolean
@@ -227,27 +233,85 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ s
                   <MapPin className="h-4 w-4 text-[#ff7c07]" />
                   <span className="text-sm">{event.location}</span>
                 </div>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Users className="h-4 w-4 text-[#ff7c07]" />
-                  <span className="text-sm">{event.attendees.toLocaleString()} attending</span>
-                </div>
+                {event.startTime && event.endTime && (
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Clock className="h-4 w-4 text-[#ff7c07]" />
+                    <span className="text-sm">{event.startTime} - {event.endTime}</span>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap gap-3">
-              <EventDetailsClient event={event} isEventFinished={isEventFinished} />
+              {isEventFinished ? (
+                <Button size="lg" disabled className="bg-gray-400 cursor-not-allowed">
+                  Event Finished
+                </Button>
+              ) : isPremium ? (
+                <BuyTicketFlowNew
+                  event={{
+                    id: event.id,
+                    slug: event.slug,
+                    title: event.title,
+                    image: event.image,
+                    date: event.date,
+                    time: event.time || (event.startTime && event.endTime ? `${event.startTime} - ${event.endTime}` : ''),
+                    location: event.location,
+                    organizerName: event.organizer,
+                    ticketTypes: event.ticketTypes || [{
+                      name: "General Admission",
+                      price: typeof event.price === 'number' ? event.price : 0,
+                      available: event.totalTickets ? event.totalTickets - event.ticketsSold : null,
+                    }],
+                    bkashNumber: event.bkashNumber,
+                  }}
+                  trigger={
+                    <Button size="lg" className="bg-[#ff7c07] hover:bg-[#e66f06] text-white">
+                      <Ticket className="mr-2 h-5 w-5" />
+                      Buy Ticket - ৳{typeof event.price === 'number' ? event.price.toFixed(2) : '0.00'}
+                    </Button>
+                  }
+                />
+              ) : (
+                <BuyTicketFlowNew
+                  event={{
+                    id: event.id,
+                    slug: event.slug,
+                    title: event.title,
+                    image: event.image,
+                    date: event.date,
+                    time: event.time || (event.startTime && event.endTime ? `${event.startTime} - ${event.endTime}` : ''),
+                    location: event.location,
+                    organizerName: event.organizer,
+                    ticketTypes: event.ticketTypes || [{
+                      name: "Free Entry",
+                      price: 0,
+                      available: event.totalTickets ? event.totalTickets - event.ticketsSold : null,
+                    }],
+                  }}
+                  trigger={
+                    <Button size="lg" className="bg-[#ff7c07] hover:bg-[#e66f06] text-white">
+                      <Ticket className="mr-2 h-5 w-5" />
+                      Get Free Ticket
+                    </Button>
+                  }
+                />
+              )}
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => setIsShareModalOpen(true)}
+              >
+                <Share2 className="mr-2 h-5 w-5" />
+                Share
+              </Button>
             </div>
           </div>
 
-          {/* Right Side - Small Ad Space (2 columns) */}
+          {/* Right Side - Static Ad Space (2 columns) */}
           <div className="lg:col-span-2 flex justify-center lg:justify-end">
-            <AdPlaceholder 
-              width={450} 
-              height={150} 
-              title="Premium Ad Space"
-              className="max-w-full"
-            />
+            <StaticAdDisplay className="w-full max-w-[450px] h-[150px]" />
           </div>
         </div>
 
@@ -285,7 +349,17 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ s
                       Date & Time
                     </div>
                     <p className="text-sm text-muted-foreground">{formattedDate}</p>
-                    <p className="text-sm text-muted-foreground">{event.time}</p>
+                    {event.startTime && event.endTime ? (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {event.startTime} - {event.endTime}
+                      </p>
+                    ) : event.time ? (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {event.time}
+                      </p>
+                    ) : null}
                   </div>
 
                   <Separator />
@@ -299,6 +373,12 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ s
                     <p className="text-sm font-semibold text-gray-900">{event.organizer}</p>
                     {event.organizationName && (
                       <p className="text-xs text-muted-foreground mt-0.5">{event.organizationName}</p>
+                    )}
+                    {event.organizerEmail && (
+                      <p className="text-xs text-muted-foreground mt-1">Email: {event.organizerEmail}</p>
+                    )}
+                    {event.organizerPhone && (
+                      <p className="text-xs text-muted-foreground">Phone: {event.organizerPhone}</p>
                     )}
                   </div>
 
@@ -349,14 +429,9 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ s
           </div>
         </div>
 
-        {/* Full Width Ad Space */}
+        {/* Full Width Static Ad Space After Description */}
         <div className="mt-12">
-          <AdPlaceholder 
-            size="banner"
-            height={200}
-            title="Large Banner Ad Space"
-            className="w-full"
-          />
+          <StaticAdDisplay className="w-full h-[250px] md:h-[300px]" />
         </div>
       </div>
     </div>

@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
+import toast from "react-hot-toast"
 import {
   Calendar,
   Clock,
@@ -63,7 +64,7 @@ export default function BuyTicketFlowNew({
 }: BuyTicketFlowProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const { toast } = useToast()
+  const { toast: toastHook } = useToast()
 
   const [currentStep, setCurrentStep] = useState<FlowStep | null>(null)
   const [selectedTicketType, setSelectedTicketType] = useState(
@@ -71,6 +72,7 @@ export default function BuyTicketFlowNew({
   )
   const [quantity, setQuantity] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
+  const [isCheckingExisting, setIsCheckingExisting] = useState(false)
 
   // Payment details for premium tickets
   const [senderBkashNumber, setSenderBkashNumber] = useState("")
@@ -82,17 +84,42 @@ export default function BuyTicketFlowNew({
   const isFree = selectedTicketType.price === 0
   const availableTickets = selectedTicketType.available || 999
 
-  const handleTriggerClick = () => {
+  const handleTriggerClick = async () => {
     if (status === "unauthenticated") {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to purchase tickets",
-        variant: "destructive",
+      toast.error("Please create an account to purchase tickets", {
+        duration: 4000,
+        position: "top-center",
       })
-      router.push("/auth/signin")
+      const currentPath = window.location.pathname
+      router.push(`/auth/signup/user?callbackUrl=${encodeURIComponent(currentPath)}`)
       return
     }
-    setCurrentStep("summary")
+
+    // Check if user already has tickets for this event
+    setIsCheckingExisting(true)
+    try {
+      const response = await fetch(`/api/tickets/check-existing?eventSlug=${event.slug}`)
+      const data = await response.json()
+
+      if (data.hasExistingBooking) {
+        toast.error("You have already purchased tickets for this event", {
+          duration: 4000,
+          position: "top-center",
+          icon: "🎫",
+        })
+        return
+      }
+
+      setCurrentStep("summary")
+    } catch (error) {
+      console.error("Error checking existing booking:", error)
+      toast.error("Failed to check ticket status. Please try again.", {
+        duration: 3000,
+        position: "top-center",
+      })
+    } finally {
+      setIsCheckingExisting(false)
+    }
   }
 
   const handleClose = () => {
@@ -130,10 +157,9 @@ export default function BuyTicketFlowNew({
   // Step 3: Payment Instructions -> Reserve Tickets
   const handleAgreeAndContinue = async () => {
     if (!agreedToTerms) {
-      toast({
-        title: "Agreement Required",
-        description: "Please agree to the terms and conditions",
-        variant: "destructive",
+      toast.error("Please agree to the terms and conditions", {
+        duration: 3000,
+        position: "top-center",
       })
       return
     }
@@ -155,21 +181,30 @@ export default function BuyTicketFlowNew({
       const data = await response.json()
 
       if (!response.ok) {
+        if (response.status === 400 && data.error.includes("already purchased")) {
+          toast.error("You have already purchased tickets for this event", {
+            duration: 4000,
+            position: "top-center",
+            icon: "🎫",
+          })
+          setCurrentStep(null)
+          return
+        }
         throw new Error(data.error || "Failed to reserve tickets")
       }
 
       setReservationId(data.reservationId)
       setCurrentStep("payment-details")
       
-      toast({
-        title: "Tickets Reserved",
-        description: "You have 20 minutes to complete payment",
+      toast.success("Tickets Reserved! You have 20 minutes to complete payment", {
+        duration: 5000,
+        position: "top-center",
+        icon: "⏰",
       })
     } catch (error: any) {
-      toast({
-        title: "Reservation Failed",
-        description: error.message,
-        variant: "destructive",
+      toast.error(error.message || "Failed to reserve tickets. Please try again.", {
+        duration: 4000,
+        position: "top-center",
       })
     } finally {
       setIsLoading(false)
@@ -179,19 +214,17 @@ export default function BuyTicketFlowNew({
   // Step 4: Payment Details -> Submit Payment
   const handleConfirmPurchase = async () => {
     if (!senderBkashNumber || !transactionId) {
-      toast({
-        title: "Missing Information",
-        description: "Please provide both Bkash number and Transaction ID",
-        variant: "destructive",
+      toast.error("Please provide both Bkash number and Transaction ID", {
+        duration: 3000,
+        position: "top-center",
       })
       return
     }
 
     if (!agreedToTerms) {
-      toast({
-        title: "Agreement Required",
-        description: "Please confirm that your payment details are correct",
-        variant: "destructive",
+      toast.error("Please confirm that your payment details are correct", {
+        duration: 3000,
+        position: "top-center",
       })
       return
     }
@@ -215,15 +248,15 @@ export default function BuyTicketFlowNew({
       }
 
       setCurrentStep("confirmation")
-      toast({
-        title: "Purchase Confirmed",
-        description: `Successfully purchased ${quantity} ticket(s)`,
+      toast.success(`Successfully purchased ${quantity} ticket(s)`, {
+        duration: 5000,
+        position: "top-center",
+        icon: "🎉",
       })
     } catch (error: any) {
-      toast({
-        title: "Payment Submission Failed",
-        description: error.message,
-        variant: "destructive",
+      toast.error(error.message || "Failed to submit payment. Please try again.", {
+        duration: 4000,
+        position: "top-center",
       })
     } finally {
       setIsLoading(false)
@@ -248,19 +281,28 @@ export default function BuyTicketFlowNew({
       const data = await response.json()
 
       if (!response.ok) {
+        if (response.status === 400 && data.error.includes("already purchased")) {
+          toast.error("You have already purchased tickets for this event", {
+            duration: 4000,
+            position: "top-center",
+            icon: "🎫",
+          })
+          setCurrentStep(null)
+          return
+        }
         throw new Error(data.error || "Failed to book tickets")
       }
 
       setCurrentStep("confirmation")
-      toast({
-        title: "Booking Confirmed",
-        description: `Successfully booked ${quantity} free ticket(s)`,
+      toast.success(`Successfully booked ${quantity} free ticket(s)`, {
+        duration: 5000,
+        position: "top-center",
+        icon: "🎉",
       })
     } catch (error: any) {
-      toast({
-        title: "Booking Failed",
-        description: error.message,
-        variant: "destructive",
+      toast.error(error.message || "Failed to book tickets. Please try again.", {
+        duration: 4000,
+        position: "top-center",
       })
     } finally {
       setIsLoading(false)
@@ -269,7 +311,9 @@ export default function BuyTicketFlowNew({
 
   return (
     <>
-      <div onClick={handleTriggerClick}>{trigger}</div>
+      <div onClick={handleTriggerClick} style={{ opacity: isCheckingExisting ? 0.6 : 1, pointerEvents: isCheckingExisting ? "none" : "auto" }}>
+        {trigger}
+      </div>
 
       {/* Step 1: Event Summary */}
       <Dialog open={currentStep === "summary"} onOpenChange={(open) => !open && handleClose()}>

@@ -279,14 +279,20 @@ export default function CreateEventPage() {
             </div>
 
             {/* Date and Time */}
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="date">Event Date</Label>
                 <Input id="date" name="date" type="date" required />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="time">Event Time</Label>
-                <Input id="time" name="time" type="time" required />
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="startTime">Start Time</Label>
+                  <Input id="startTime" name="startTime" type="time" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endTime">End Time</Label>
+                  <Input id="endTime" name="endTime" type="time" required />
+                </div>
               </div>
             </div>
 

@@ -13,26 +13,30 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface OrganizerDropdownProps {
   userName: string
   organizationName?: string
+  userImage?: string
 }
 
-export function OrganizerDropdown({ userName, organizationName }: OrganizerDropdownProps) {
+export function OrganizerDropdown({ userName, organizationName, userImage }: OrganizerDropdownProps) {
+  console.log("OrganizerDropdown - userImage:", userImage)
+  
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-10 w-10 rounded-full p-0">
-          <div className="flex h-10 w-10 items-center justify-center">
-            <Image
-              src="/organizer.png"
-              alt="Organizer"
-              width={24}
-              height={24}
-              className="h-8 w-8"
-            />
-          </div>
+          <Avatar className="h-9 w-9">
+            {userImage ? (
+              <AvatarImage src={userImage} alt={userName} className="object-cover" />
+            ) : (
+              <AvatarFallback className="bg-linear-to-br from-purple-600 to-blue-600 text-white">
+                <User className="h-5 w-5" />
+              </AvatarFallback>
+            )}
+          </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
@@ -46,7 +50,7 @@ export function OrganizerDropdown({ userName, organizationName }: OrganizerDropd
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/profile" className="cursor-pointer">
+          <Link href="/dashboard" className="cursor-pointer">
             <User className="mr-2 h-4 w-4" />
             View Profile
           </Link>

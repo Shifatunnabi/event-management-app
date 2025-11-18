@@ -83,15 +83,15 @@ export default function VendorDirectoryPage() {
       <div className="min-h-screen">
         <div className="py-8">
           {/* Header */}
-          <div className="mb-8 flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div className="flex-1 text-center">
-              <h1 className="mb-2 text-4xl font-bold">Vendor Directory</h1>
-              <p className="text-muted-foreground">Find trusted professionals for your event</p>
+          <div className="mb-8 text-center">
+            <h1 className="mb-2 text-4xl font-bold">Vendor Directory</h1>
+            <p className="text-muted-foreground">Find trusted professionals for your event</p>
+            <div className="mt-6 flex justify-center">
+              <Button onClick={() => setApplyModalOpen(true)} className="bg-[#ff7c07] text-white">
+                <Plus className="mr-2 h-4 w-4" />
+                Apply to be Featured
+              </Button>
             </div>
-            <Button onClick={() => setApplyModalOpen(true)} className="bg-[#ff7c07] text-white">
-              <Plus className="mr-2 h-4 w-4" />
-              Apply to be Featured
-            </Button>
           </div>
 
           <div className="mx-auto mb-8 max-w-3xl space-y-4">

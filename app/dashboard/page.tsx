@@ -79,7 +79,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/auth/signin")
+      const currentPath = window.location.pathname
+      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(currentPath)}`)
       return
     }
 

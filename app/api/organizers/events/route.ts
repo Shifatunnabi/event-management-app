@@ -39,7 +39,8 @@ export async function POST(request: NextRequest) {
     const location = formData.get("location") as string
     const locationLink = formData.get("locationLink") as string
     const date = formData.get("date") as string
-    const time = formData.get("time") as string
+    const startTime = formData.get("startTime") as string
+    const endTime = formData.get("endTime") as string
     const category = formData.get("category") as string
     const ticketType = formData.get("ticketType") as "FREE" | "PREMIUM"
     const ticketPrice = formData.get("ticketPrice")
@@ -48,6 +49,19 @@ export async function POST(request: NextRequest) {
     const totalTickets = formData.get("totalTickets")
     const imageUrl = formData.get("imageUrl") as string
 
+    // Helper function to convert 24-hour time to 12-hour format with AM/PM
+    const convertTo12Hour = (time24: string): string => {
+      const [hours, minutes] = time24.split(':')
+      const hour = parseInt(hours, 10)
+      const ampm = hour >= 12 ? 'PM' : 'AM'
+      const hour12 = hour % 12 || 12
+      return `${hour12}:${minutes} ${ampm}`
+    }
+
+    // Convert times to 12-hour format with AM/PM
+    const formattedStartTime = startTime ? convertTo12Hour(startTime) : undefined
+    const formattedEndTime = endTime ? convertTo12Hour(endTime) : undefined
+
     // Log received data for debugging
     console.log("Received form data:", {
       title,
@@ -55,7 +69,8 @@ export async function POST(request: NextRequest) {
       location,
       locationLink,
       date,
-      time,
+      startTime: formattedStartTime,
+      endTime: formattedEndTime,
       category,
       ticketType,
       ticketPrice,
@@ -65,13 +80,14 @@ export async function POST(request: NextRequest) {
     })
 
     // Validate required fields
-    if (!title || !description || !location || !date || !time || !category || !ticketType) {
+    if (!title || !description || !location || !date || !startTime || !endTime || !category || !ticketType) {
       const missing = []
       if (!title) missing.push("title")
       if (!description) missing.push("description")
       if (!location) missing.push("location")
       if (!date) missing.push("date")
-      if (!time) missing.push("time")
+      if (!startTime) missing.push("startTime")
+      if (!endTime) missing.push("endTime")
       if (!category) missing.push("category")
       if (!ticketType) missing.push("ticketType")
       
@@ -144,7 +160,8 @@ export async function POST(request: NextRequest) {
       description,
       image: imageUrl,
       date: new Date(date),
-      time,
+      startTime: formattedStartTime,
+      endTime: formattedEndTime,
       location,
       locationLink: locationLink || undefined,
       category,
@@ -239,7 +256,9 @@ export async function GET(request: NextRequest) {
       title: event.title,
       slug: event.slug,
       date: event.date,
-      time: event.time,
+      startTime: event.startTime,
+      endTime: event.endTime,
+      time: event.time, // Keep for backward compatibility
       status: event.status,
       ticketsSold: event.ticketsSold || 0,
       attendees: event.ticketsSold || 0,

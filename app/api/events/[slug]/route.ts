@@ -11,14 +11,19 @@ export async function GET(
 
     const { slug } = await params
 
-    // Find event by slug
+    // Find event by slug and populate organizer details
     const event: any = await Event.findOne({ slug, status: { $ne: "HIDDEN" } })
       .select("-interested -going")
+      .populate("organizerId", "email phone")
       .lean()
 
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
+
+    // Extract organizer details
+    const organizerEmail = event.organizerId?.email || ""
+    const organizerPhone = event.organizerId?.phone || ""
 
     // Determine ticket type based on ticket prices
     const ticketTypes = event.ticketTypes || []
@@ -36,12 +41,16 @@ export async function GET(
         image: event.image,
         date: event.date.toISOString().split("T")[0],
         time: event.time,
+        startTime: event.startTime,
+        endTime: event.endTime,
         location: event.location,
         locationLink: event.locationLink,
         category: event.category,
         organizer: event.organizerName,
         organizationName: event.organizationName,
-        organizerId: event.organizerId.toString(),
+        organizerEmail: organizerEmail,
+        organizerPhone: organizerPhone,
+        organizerId: typeof event.organizerId === 'object' ? event.organizerId._id.toString() : event.organizerId.toString(),
         price: "Free",
         ticketType: ticketType,
         ticketTypes: [],
@@ -76,12 +85,16 @@ export async function GET(
       image: event.image,
       date: event.date.toISOString().split("T")[0],
       time: event.time,
+      startTime: event.startTime,
+      endTime: event.endTime,
       location: event.location,
       locationLink: event.locationLink,
       category: event.category,
       organizer: event.organizerName,
       organizationName: event.organizationName,
-      organizerId: event.organizerId.toString(),
+      organizerEmail: organizerEmail,
+      organizerPhone: organizerPhone,
+      organizerId: typeof event.organizerId === 'object' ? event.organizerId._id.toString() : event.organizerId.toString(),
       price: minPrice === 0 ? "Free" : minPrice,
       ticketType: ticketType,
       ticketTypes: ticketTypes,

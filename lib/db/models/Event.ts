@@ -15,7 +15,9 @@ export interface IEvent extends Document {
   description: string
   image: string
   date: Date
-  time: string
+  time?: string // Legacy field
+  startTime?: string
+  endTime?: string
   location: string
   locationLink?: string
   category: string
@@ -83,7 +85,15 @@ const EventSchema = new Schema<IEvent>(
     },
     time: {
       type: String,
-      required: [true, "Time is required"],
+      required: false,
+    },
+    startTime: {
+      type: String,
+      required: false,
+    },
+    endTime: {
+      type: String,
+      required: false,
     },
     location: {
       type: String,
@@ -190,6 +200,11 @@ EventSchema.index({ status: 1, date: 1 })
 EventSchema.index({ category: 1, date: 1 })
 EventSchema.index({ isFeatured: 1, date: 1 })
 EventSchema.index({ title: "text", description: "text", location: "text" })
+
+// Clear cached model in development to ensure schema updates are applied
+if (process.env.NODE_ENV === 'development' && models.Event) {
+  delete models.Event
+}
 
 const Event = models.Event || model<IEvent>("Event", EventSchema)
 

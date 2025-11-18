@@ -3,6 +3,7 @@
 import { User, Ticket, LogOut } from "lucide-react"
 import { signOut } from "next-auth/react"
 import Link from "next/link"
+import Image from "next/image"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,13 +13,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface UserDropdownProps {
   userName: string
+  userImage?: string
 }
 
-export function UserDropdown({ userName }: UserDropdownProps) {
+export function UserDropdown({ userName, userImage }: UserDropdownProps) {
   const initials = userName
     .split(" ")
     .map((n) => n[0])
@@ -26,12 +28,20 @@ export function UserDropdown({ userName }: UserDropdownProps) {
     .toUpperCase()
     .slice(0, 2)
 
+  console.log("UserDropdown - userImage:", userImage)
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-10 w-10 rounded-full p-0">
           <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
+            {userImage ? (
+              <AvatarImage src={userImage} alt={userName} className="object-cover" />
+            ) : (
+              <AvatarFallback className="bg-linear-to-br from-purple-600 to-blue-600 text-white">
+                <User className="h-5 w-5" />
+              </AvatarFallback>
+            )}
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
