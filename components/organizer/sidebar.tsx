@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
+import { toast } from "sonner"
 import { LayoutDashboard, PlusCircle, Users, QrCode, Briefcase, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -25,6 +26,7 @@ export default function OrganizerSidebar({ isOpen = true, onClose }: OrganizerSi
   const router = useRouter()
 
   const handleLogout = async () => {
+    toast.success("Successfully logged out")
     await signOut({ callbackUrl: "/" })
   }
 

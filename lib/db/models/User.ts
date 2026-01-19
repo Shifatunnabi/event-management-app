@@ -12,6 +12,7 @@ export interface IUser extends Document {
   
   // Organizer-specific fields
   organizerStatus?: "PENDING" | "APPROVED" | "REJECTED"
+  isBanned?: boolean
   nidNumber?: string
   organizationName?: string
   
@@ -65,6 +66,10 @@ const UserSchema = new Schema<IUser>(
       enum: ["PENDING", "APPROVED", "REJECTED"],
       default: undefined,
     },
+    isBanned: {
+      type: Boolean,
+      default: false,
+    },
     nidNumber: {
       type: String,
       trim: true,
@@ -82,6 +87,7 @@ const UserSchema = new Schema<IUser>(
 // Indexes (removed email since it's already unique in schema)
 UserSchema.index({ role: 1 })
 UserSchema.index({ organizerStatus: 1 })
+UserSchema.index({ isBanned: 1 })
 
 const User = models.User || model<IUser>("User", UserSchema)
 

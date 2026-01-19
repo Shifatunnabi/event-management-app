@@ -52,6 +52,7 @@ export const authConfig = {
           organizerStatus: user.organizerStatus,
           organizationName: user.organizationName,
           profileImage: user.profileImage,
+          isBanned: user.isBanned,
         }
       },
     }),
@@ -65,6 +66,7 @@ export const authConfig = {
         token.organizerStatus = user.organizerStatus
         token.organizationName = user.organizationName
         token.profileImage = (user as any).profileImage
+        token.isBanned = (user as any).isBanned
       }
       
       // Refresh user data from database on each request to get latest profileImage
@@ -76,6 +78,7 @@ export const authConfig = {
             token.profileImage = freshUser.profileImage
             token.organizerStatus = freshUser.organizerStatus
             token.organizationName = freshUser.organizationName
+            token.isBanned = freshUser.isBanned
           }
         } catch (error) {
           console.error("Error refreshing user data in JWT:", error)
@@ -91,6 +94,7 @@ export const authConfig = {
         session.user.organizerStatus = token.organizerStatus as string | undefined
         session.user.organizationName = token.organizationName as string | undefined
         ;(session.user as any).profileImage = token.profileImage as string | undefined
+        ;(session.user as any).isBanned = token.isBanned as boolean | undefined
       }
       return session
     },

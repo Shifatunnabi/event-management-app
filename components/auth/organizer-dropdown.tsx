@@ -2,6 +2,7 @@
 
 import { Building2, User, PlusCircle, LayoutDashboard, LogOut } from "lucide-react"
 import { signOut } from "next-auth/react"
+import { toast } from "sonner"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -70,7 +71,10 @@ export function OrganizerDropdown({ userName, organizationName, userImage }: Org
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer text-red-600 focus:text-red-600"
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={() => {
+            toast.success("Successfully logged out")
+            signOut({ callbackUrl: "/" })
+          }}
         >
           <LogOut className="mr-2 h-4 w-4" />
           Logout

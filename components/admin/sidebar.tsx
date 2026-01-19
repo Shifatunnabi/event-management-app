@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, UserCheck, Users, Store, FileText, ImageIcon, LogOut, Calendar, Megaphone } from "lucide-react"
+import { toast } from "sonner"
 import { adminLogout } from "@/lib/admin-auth"
 import { Button } from "@/components/ui/button"
 
@@ -22,6 +23,7 @@ export function AdminSidebar() {
   const router = useRouter()
 
   const handleLogout = () => {
+    toast.success("Admin logged out successfully")
     adminLogout()
     router.push("/admin/signin")
   }

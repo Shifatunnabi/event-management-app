@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { UserCircle, Building2, Briefcase } from "lucide-react"
+import { UserCircle, Building2, Briefcase, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import VendorRegistrationForm from "@/components/vendor/vendor-registration-form"
 
@@ -285,7 +285,14 @@ export default function RegisterPage() {
             )}
 
             <Button type="submit" className="w-full bg-[#ff7c07] hover:bg-[#e66f06]" size="lg" disabled={isLoading}>
-              {isLoading ? "Creating Account..." : "Create Account"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                "Create Account"
+              )}
             </Button>
 
             

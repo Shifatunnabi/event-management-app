@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Search, Loader2, Calendar, Eye } from "lucide-react"
+import { Search, Loader2, Calendar, Eye, MapPin, Users, Tag } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,9 @@ interface Event {
   title: string
   slug: string
   date: string
-  time: string
+  time?: string
+  startTime?: string
+  endTime?: string
   ticketType: "FREE" | "PREMIUM"
   organizerName: string
   organizationName?: string
@@ -173,24 +175,50 @@ export default function AdminEventManagementPage() {
                               >
                                 {event.ticketType}
                               </Badge>
+                              {event.status === "HIDDEN" && (
+                                <Badge className="bg-gray-200 text-gray-700">
+                                  Hidden
+                                </Badge>
+                              )}
                             </div>
-                            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                            
+                            {/* Date, Time, Location, Attendees */}
+                            <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
-                                <span>{event.time}</span>
+                                <span>
+                                  {new Date(event.date).toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric"
+                                  })}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                <span>
+                                  {(event.startTime || event.endTime)
+                                    ? `${event.startTime || ''} - ${event.endTime || ''}`.trim().replace(/^-\s*/, '').replace(/\s*-$/, '')
+                                    : event.time || "Time TBA"}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                <span className="truncate max-w-[200px]">{event.location}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Users className="h-3 w-3" />
+                                <span>{event.attendees} attendees</span>
                               </div>
                             </div>
+                            
+                            {/* Organizer Info */}
                             <p className="text-sm font-medium text-muted-foreground mt-2">
-                              Organizer: <span className="text-foreground">{event.organizerName}</span>
+                              <span className="text-foreground">{event.organizerName}</span>
                               {event.organizationName && (
-                                <span className="ml-1">({event.organizationName})</span>
+                                <span className="ml-1">• {event.organizationName}</span>
                               )}
                             </p>
-                            {event.status === "HIDDEN" && (
-                              <span className="inline-block mt-2 text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
-                                Hidden from public
-                              </span>
-                            )}
                           </div>
                         </div>
                       </div>

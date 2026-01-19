@@ -64,7 +64,9 @@ export async function GET(request: NextRequest) {
         title: event.title,
         slug: event.slug,
         date: event.date,
-        time: event.time,
+        time: event.time, // Legacy field
+        startTime: event.startTime,
+        endTime: event.endTime,
         ticketType: ticketType,
         organizerName: event.organizerName,
         organizationName: event.organizationName,

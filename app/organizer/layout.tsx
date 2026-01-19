@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Menu } from "lucide-react"
 import OrganizerSidebar from "@/components/organizer/sidebar"
+import BannedOrganizerMessage from "@/components/organizer/banned-message"
 import { Button } from "@/components/ui/button"
 
 export default function OrganizerLayout({ children }: { children: React.ReactNode }) {
@@ -49,20 +50,27 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
     return null
   }
 
+  // Check if organizer is banned
+  const isBanned = (session.user as any).isBanned || false
+
   return (
     <div className="flex">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed left-4 top-20 z-50 lg:hidden"
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-      >
-        <Menu className="h-6 w-6" />
-      </Button>
+      {!isBanned && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="fixed left-4 top-20 z-50 lg:hidden"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          <Menu className="h-6 w-6" />
+        </Button>
+      )}
 
-      <OrganizerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {!isBanned && <OrganizerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
 
-      <main className="min-h-screen w-full lg:ml-64 lg:pr-64">{children}</main>
+      <main className={`min-h-screen w-full ${!isBanned ? 'lg:ml-64 lg:pr-64' : ''}`}>
+        {isBanned ? <BannedOrganizerMessage /> : children}
+      </main>
     </div>
   )
 }

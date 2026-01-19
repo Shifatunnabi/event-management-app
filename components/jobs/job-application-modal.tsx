@@ -81,6 +81,9 @@ export default function JobApplicationModal({
       const data = await response.json()
 
       if (data.success) {
+        // Save email to localStorage for tracking applications
+        localStorage.setItem("userEmail", formData.email.toLowerCase())
+        
         toast({
           title: "Success",
           description: "Application submitted successfully! The organizer will review your application.",

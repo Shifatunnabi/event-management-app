@@ -292,7 +292,7 @@ export default function JobsBoardPage() {
                         className="bg-[#ff7c07] hover:bg-[#e66f06] flex-1 sm:flex-initial"
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        <span>View Details</span>
+                        <span>Show Applicants</span>
                       </Button>
                     </div>
                   </div>

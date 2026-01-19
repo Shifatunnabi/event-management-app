@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Calendar, MapPin, Clock, DollarSign, Users, Briefcase } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Calendar, MapPin, Clock, Users, Briefcase } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -12,10 +12,13 @@ interface JobCardProps {
   job: Job
   onViewDetails: (job: Job) => void
   onApplicationSuccess?: () => void
+  userEmail?: string
 }
 
-export default function JobCard({ job, onViewDetails, onApplicationSuccess }: JobCardProps) {
+export default function JobCard({ job, onViewDetails, onApplicationSuccess, userEmail }: JobCardProps) {
   const [applicationModalOpen, setApplicationModalOpen] = useState(false)
+  const [hasApplied, setHasApplied] = useState(false)
+  const [checkingStatus, setCheckingStatus] = useState(false)
   
   const formattedDate = new Date(job.date).toLocaleDateString("en-US", {
     month: "short",
@@ -23,7 +26,32 @@ export default function JobCard({ job, onViewDetails, onApplicationSuccess }: Jo
     year: "numeric",
   })
 
+  // Check if user has already applied
+  useEffect(() => {
+    const checkApplicationStatus = async () => {
+      // Get email from localStorage if not provided
+      const email = userEmail || localStorage.getItem("userEmail")
+      if (!email) return
+
+      try {
+        setCheckingStatus(true)
+        const response = await fetch(`/api/jobs/${job.id}/check-application?email=${encodeURIComponent(email)}`)
+        const data = await response.json()
+        if (data.success) {
+          setHasApplied(data.hasApplied)
+        }
+      } catch (error) {
+        console.error("Error checking application status:", error)
+      } finally {
+        setCheckingStatus(false)
+      }
+    }
+
+    checkApplicationStatus()
+  }, [job.id, userEmail])
+
   const handleApplicationSuccess = () => {
+    setHasApplied(true)
     if (onApplicationSuccess) {
       onApplicationSuccess()
     }
@@ -55,7 +83,7 @@ export default function JobCard({ job, onViewDetails, onApplicationSuccess }: Jo
             <span>{job.duration}</span>
           </div>
           <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4" />
+            <span className="text-sm font-semibold">BDT</span>
             <span>{job.salary}</span>
           </div>
         </div>
@@ -71,10 +99,24 @@ export default function JobCard({ job, onViewDetails, onApplicationSuccess }: Jo
           <Button onClick={() => onViewDetails(job)} variant="outline" className="flex-1 bg-transparent">
             View Details
           </Button>
-          <Button className="bg-[#ff7c07] hover:bg-[#e66f06] flex-1 text-white" onClick={() => setApplicationModalOpen(true)}>
-            <Briefcase className="mr-2 h-4 w-4" />
-            Apply Now
-          </Button>
+          {hasApplied ? (
+            <Button 
+              className="flex-1 text-white bg-gray-400 cursor-not-allowed" 
+              disabled
+            >
+              <Briefcase className="mr-2 h-4 w-4" />
+              Already Applied
+            </Button>
+          ) : (
+            <Button 
+              className="bg-[#ff7c07] hover:bg-[#e66f06] flex-1 text-white" 
+              onClick={() => setApplicationModalOpen(true)}
+              disabled={checkingStatus}
+            >
+              <Briefcase className="mr-2 h-4 w-4" />
+              {checkingStatus ? "Checking..." : "Apply Now"}
+            </Button>
+          )}
         </div>
       </CardContent>
 

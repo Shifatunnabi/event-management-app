@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
           nidNumber: organizer.nidNumber,
           joinDate: organizer.createdAt,
           eventCount,
+          isBanned: organizer.isBanned || false,
         }
       })
     )

@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { signIn } from "next-auth/react"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 export default function SignInPage() {
   const router = useRouter()
@@ -35,20 +36,29 @@ export default function SignInPage() {
 
       if (result?.error) {
         if (result.error === "PENDING_APPROVAL") {
-          setError("Your organizer account is pending admin approval. Please wait for approval to login.")
+          const errorMsg = "Your organizer account is pending admin approval. Please wait for approval to login."
+          setError(errorMsg)
+          toast.error(errorMsg)
         } else if (result.error === "REJECTED") {
-          setError("Your organizer application was rejected. Please contact support.")
+          const errorMsg = "Your organizer application was rejected. Please contact support."
+          setError(errorMsg)
+          toast.error(errorMsg)
         } else {
-          setError("Invalid email or password")
+          const errorMsg = "Invalid email or password"
+          setError(errorMsg)
+          toast.error(errorMsg)
         }
         setLoading(false)
       } else {
         // Success - redirect to callback URL
+        toast.success("Successfully signed in!")
         router.push(callbackUrl)
         router.refresh()
       }
     } catch (err) {
-      setError("An error occurred. Please try again.")
+      const errorMsg = "An error occurred. Please try again."
+      setError(errorMsg)
+      toast.error(errorMsg)
       setLoading(false)
     }
   }
@@ -94,7 +104,14 @@ export default function SignInPage() {
             </div>
 
             <Button type="submit" className="bg-[#ff7c07] hover:bg-[#e66f06] w-full text-white" size="lg" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">

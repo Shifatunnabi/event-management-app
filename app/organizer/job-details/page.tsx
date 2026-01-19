@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Loader2, ArrowLeft, Calendar, MapPin, DollarSign, Clock, Users, Mail, Phone, Briefcase, User } from "lucide-react"
+import { Loader2, ArrowLeft, Calendar, MapPin, Clock, Users, Mail, Phone, Briefcase, User, ChevronDown, ChevronUp } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -47,6 +47,14 @@ export default function JobDetailsPage() {
   const [job, setJob] = useState<Job | null>(null)
   const [applications, setApplications] = useState<Application[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [expandedCards, setExpandedCards] = useState<{ [key: string]: boolean }>({})
+
+  const toggleCard = (id: string) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }))
+  }
 
   useEffect(() => {
     if (jobId) {
@@ -171,7 +179,7 @@ export default function JobDetailsPage() {
 
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
-                <DollarSign className="h-5 w-5 text-orange-600" />
+                <span className="text-sm font-semibold text-orange-600">BDT</span>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Salary</p>
@@ -207,99 +215,127 @@ export default function JobDetailsPage() {
         <CardContent>
           {applications.length > 0 ? (
             <div className="grid gap-4">
-              {applications.map((app) => (
-                <Card key={app._id} className="border-2">
-                  <CardContent className="p-4 md:p-6">
-                    <div className="space-y-4">
-                      {/* Applicant Header */}
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-4 border-b">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <User className="h-5 w-5 text-muted-foreground" />
-                            <h3 className="text-lg font-semibold">{app.userName}</h3>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{app.occupation}</p>
-                        </div>
-                        <Badge variant={app.status === "PENDING" ? "secondary" : "default"}>
-                          {app.status}
-                        </Badge>
-                      </div>
-
-                      {/* Contact Info */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          <div className="min-w-0">
-                            <p className="text-xs text-muted-foreground">Email</p>
-                            <p className="text-sm truncate">{app.userEmail}</p>
-                          </div>
-                        </div>
-
-                        {app.userPhone && (
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Phone</p>
-                              <p className="text-sm">{app.userPhone}</p>
+              {applications.map((app) => {
+                const isExpanded = expandedCards[app._id]
+                
+                return (
+                  <Card key={app._id} className="border-2">
+                    <CardContent className="p-4 md:p-6">
+                      <div className="space-y-4">
+                        {/* Applicant Header - Always Visible */}
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <User className="h-5 w-5 text-muted-foreground" />
+                              <h3 className="text-lg font-semibold">{app.userName}</h3>
                             </div>
+                            <p className="text-sm text-muted-foreground">{app.occupation}</p>
                           </div>
-                        )}
-
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <p className="text-xs text-muted-foreground">Age & Gender</p>
-                            <p className="text-sm">{app.age} years, {app.gender}</p>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleCard(app._id)}
+                              className="flex items-center gap-2"
+                            >
+                              {isExpanded ? (
+                                <>
+                                  <ChevronUp className="h-4 w-4" />
+                                  Collapse
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="h-4 w-4" />
+                                  Expand
+                                </>
+                              )}
+                            </Button>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <p className="text-xs text-muted-foreground">Date of Birth</p>
-                            <p className="text-sm">
-                              {new Date(app.dateOfBirth).toLocaleDateString("en-US", {
+                        {/* Expandable Content */}
+                        {isExpanded && (
+                          <>
+                            <div className="pt-4 border-t" />
+                            
+                            {/* Contact Info */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="flex items-center gap-2">
+                                <Mail className="h-4 w-4 text-muted-foreground" />
+                                <div className="min-w-0">
+                                  <p className="text-xs text-muted-foreground">Email</p>
+                                  <p className="text-sm truncate">{app.userEmail}</p>
+                                </div>
+                              </div>
+
+                              {app.userPhone && (
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-4 w-4 text-muted-foreground" />
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">Phone</p>
+                                    <p className="text-sm">{app.userPhone}</p>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Age & Gender</p>
+                                  <p className="text-sm">{app.age} years, {app.gender}</p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Date of Birth</p>
+                                  <p className="text-sm">
+                                    {new Date(app.dateOfBirth).toLocaleDateString("en-US", {
+                                      month: "long",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Address */}
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Address</p>
+                              <p className="text-sm">{app.address}</p>
+                            </div>
+
+                            {/* Experience */}
+                            <div className="pt-4 border-t">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Briefcase className="h-4 w-4 text-muted-foreground" />
+                                <p className="font-medium">
+                                  Experience: {app.experienceYears} year{app.experienceYears !== 1 ? "s" : ""}
+                                </p>
+                              </div>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{app.experienceDetails}</p>
+                            </div>
+
+                            {/* Applied Date */}
+                            <div className="pt-4 border-t text-xs text-muted-foreground">
+                              Applied on{" "}
+                              {new Date(app.appliedAt).toLocaleDateString("en-US", {
                                 month: "long",
                                 day: "numeric",
                                 year: "numeric",
+                                hour: "numeric",
+                                minute: "numeric",
                               })}
-                            </p>
-                          </div>
-                        </div>
+                            </div>
+                          </>
+                        )}
                       </div>
-
-                      {/* Address */}
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Address</p>
-                        <p className="text-sm">{app.address}</p>
-                      </div>
-
-                      {/* Experience */}
-                      <div className="pt-4 border-t">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Briefcase className="h-4 w-4 text-muted-foreground" />
-                          <p className="font-medium">
-                            Experience: {app.experienceYears} year{app.experienceYears !== 1 ? "s" : ""}
-                          </p>
-                        </div>
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{app.experienceDetails}</p>
-                      </div>
-
-                      {/* Applied Date */}
-                      <div className="pt-4 border-t text-xs text-muted-foreground">
-                        Applied on{" "}
-                        {new Date(app.appliedAt).toLocaleDateString("en-US", {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "numeric",
-                          minute: "numeric",
-                        })}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12">

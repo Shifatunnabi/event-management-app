@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Calendar, Mail, Building, Search, Eye, Phone, FileText, Users } from "lucide-react"
+import { Calendar, Mail, Building, Search, Eye, Phone, FileText, Users, ShieldBan, ShieldCheck } from "lucide-react"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import {
@@ -25,6 +25,7 @@ interface Organizer {
   nidNumber?: string
   joinDate: string
   eventCount: number
+  isBanned?: boolean
 }
 
 interface Stats {
@@ -44,6 +45,7 @@ export default function OrganizerManagementPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedOrganizer, setSelectedOrganizer] = useState<Organizer | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   useEffect(() => {
     fetchOrganizers()
@@ -67,6 +69,33 @@ export default function OrganizerManagementPage() {
   const showDetails = (organizer: Organizer) => {
     setSelectedOrganizer(organizer)
     setDetailsOpen(true)
+  }
+
+  const handleBanToggle = async (organizerId: string, currentBanStatus: boolean) => {
+    try {
+      setActionLoading(organizerId)
+      const response = await fetch("/api/admin/organizers/ban", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          organizerId,
+          isBanned: !currentBanStatus,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success(data.message)
+        fetchOrganizers()
+      } else {
+        throw new Error(data.error)
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update ban status")
+    } finally {
+      setActionLoading(null)
+    }
   }
 
   const filteredOrganizers = organizers.filter(
@@ -169,7 +198,11 @@ export default function OrganizerManagementPage() {
                       <div className="space-y-2 flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="text-lg font-semibold">{organizer.name}</h3>
-                          <Badge className="bg-green-600">Active</Badge>
+                          {organizer.isBanned ? (
+                            <Badge className="bg-red-600">Banned</Badge>
+                          ) : (
+                            <Badge className="bg-green-600">Active</Badge>
+                          )}
                         </div>
                         <p className="text-sm text-muted-foreground font-medium flex items-center gap-1">
                           <Building className="w-4 h-4" />
@@ -193,10 +226,38 @@ export default function OrganizerManagementPage() {
                           <Badge variant="secondary">{organizer.eventCount} Events Listed</Badge>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => showDetails(organizer)}>
-                        <Eye className="w-4 h-4 mr-2" />
-                        Details
-                      </Button>
+                      <div className="flex gap-2 flex-col sm:flex-row">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => showDetails(organizer)}
+                          className="w-full sm:w-auto"
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Details
+                        </Button>
+                        <Button
+                          variant={organizer.isBanned ? "default" : "destructive"}
+                          size="sm"
+                          onClick={() => handleBanToggle(organizer.id, organizer.isBanned || false)}
+                          disabled={actionLoading === organizer.id}
+                          className="w-full sm:w-auto"
+                        >
+                          {actionLoading === organizer.id ? (
+                            <>Loading...</>
+                          ) : organizer.isBanned ? (
+                            <>
+                              <ShieldCheck className="w-4 h-4 mr-2" />
+                              Unban
+                            </>
+                          ) : (
+                            <>
+                              <ShieldBan className="w-4 h-4 mr-2" />
+                              Ban
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
