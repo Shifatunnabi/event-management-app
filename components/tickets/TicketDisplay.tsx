@@ -12,14 +12,20 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
-interface TicketData {
-  id: string;
+interface QRCodeData {
+  type: string;
   qrData: string;
   qrSignature: string;
+  scanned: boolean;
+  scannedAt?: string;
+}
+
+interface TicketData {
+  id: string;
+  qrCodes: QRCodeData[];
   status: "ACTIVE" | "SCANNED" | "EXPIRED";
   price: number;
   purchaseDate: string;
-  scannedAt?: string;
 }
 
 interface EventData {
@@ -79,9 +85,13 @@ export default function TicketDisplay({
     }
   };
 
+  const getQRTypeLabel = (type: string) => {
+    return type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
           <DialogTitle className="text-xl font-bold flex items-center justify-between">
             <span>Your Tickets</span>
@@ -119,16 +129,71 @@ export default function TicketDisplay({
                 </h3>
               </div>
 
-              {/* QR Code */}
-              <div className="flex justify-center py-4 bg-white rounded-lg">
-                <QRCodeSVG
-                  value={JSON.stringify({
-                    qrData: ticket.qrData,
-                    qrSignature: ticket.qrSignature,
-                  })}
-                  size={200}
-                  level="H"
-                />
+              {/* Attendee Info */}
+              <div className="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    Attendee Info
+                  </p>
+                  <p className="text-sm font-medium">Name</p>
+                  <p className="text-sm font-medium">Email</p>
+                  <p className="text-sm font-medium">Phone</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    Event Details
+                  </p>
+                  <p className="text-sm font-medium">{event.title}</p>
+                  <p className="text-sm font-medium">{formatDate(event.date)}</p>
+                  <p className="text-sm font-medium">{event.time}</p>
+                  <p className="text-sm font-medium">{event.location}</p>
+                </div>
+              </div>
+
+              {/* QR Codes Grid */}
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  QR Codes
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {ticket.qrCodes.map((qrCode) => (
+                    <div
+                      key={qrCode.qrSignature}
+                      className={`border-2 rounded-lg p-4 ${
+                        qrCode.scanned
+                          ? "border-gray-300 bg-gray-50"
+                          : "border-gray-200 bg-white"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-semibold">
+                          QR Type
+                        </p>
+                        {qrCode.scanned && (
+                          <Badge variant="secondary" className="text-xs">
+                            Scanned
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-lg font-bold mb-3">
+                        {getQRTypeLabel(qrCode.type)}
+                      </p>
+                      <div className="flex justify-center bg-white p-3 rounded">
+                        <QRCodeSVG
+                          value={qrCode.qrData}
+                          size={120}
+                          level="H"
+                          className={qrCode.scanned ? "opacity-50" : ""}
+                        />
+                      </div>
+                      {qrCode.scanned && qrCode.scannedAt && (
+                        <p className="text-xs text-gray-500 mt-2 text-center">
+                          Scanned: {new Date(qrCode.scannedAt).toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Ticket ID */}
@@ -192,16 +257,6 @@ export default function TicketDisplay({
                   ৳{ticket.price.toFixed(2)}
                 </span>
               </div>
-
-              {/* Scanned Info */}
-              {ticket.status === "SCANNED" && ticket.scannedAt && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
-                  <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                    Scanned on {formatDate(ticket.scannedAt)} at{" "}
-                    {new Date(ticket.scannedAt).toLocaleTimeString()}
-                  </p>
-                </div>
-              )}
             </Card>
           ))}
 
@@ -211,9 +266,10 @@ export default function TicketDisplay({
               📌 Important Instructions
             </h4>
             <ul className="text-xs text-amber-800 dark:text-amber-300 space-y-1 list-disc list-inside">
-              <li>Present this QR code at the event entrance</li>
-              <li>DO NOT share your QR code with anyone</li>
-              <li>Each ticket can only be scanned once</li>
+              <li>Present the appropriate QR code for each service</li>
+              <li>Entry QR code is required for venue access</li>
+              <li>DO NOT share your QR codes with anyone</li>
+              <li>Each QR code can only be scanned once</li>
               <li>Tickets cannot be transferred or refunded</li>
               <li>Arrive early to avoid queues</li>
             </ul>

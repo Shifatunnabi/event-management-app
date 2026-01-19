@@ -30,6 +30,7 @@ interface Event {
   bkashNumber?: string
   hasTicketLimit: boolean
   totalTickets?: number
+  qrCodeTypes?: string[]
 }
 
 export default function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
@@ -46,6 +47,28 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [ticketType, setTicketType] = useState<"FREE" | "PREMIUM">("FREE")
   const [hasTicketLimit, setHasTicketLimit] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [qrCodeTypes, setQrCodeTypes] = useState<string[]>(["entry"])
+
+  const qrCodeOptions = [
+    { id: "entry", label: "Entry", disabled: true }, // Always required
+    { id: "breakfast", label: "Breakfast" },
+    { id: "lunch", label: "Lunch" },
+    { id: "snacks", label: "Snacks" },
+    { id: "dinner", label: "Dinner" },
+    { id: "gifts", label: "Gifts" },
+  ]
+
+  const handleQrCodeTypeToggle = (type: string) => {
+    if (type === "entry") return // Entry cannot be unchecked
+    
+    setQrCodeTypes((prev) => {
+      if (prev.includes(type)) {
+        return prev.filter((t) => t !== type)
+      } else {
+        return [...prev, type]
+      }
+    })
+  }
 
   // Helper function to convert 12-hour format with AM/PM to 24-hour format
   const convertTo24Hour = (time12h: string): string => {
@@ -83,6 +106,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         setHasTicketLimit(eventData.hasTicketLimit)
         setPosterPreview(eventData.image)
         setUploadedImageUrl(eventData.image)
+        setQrCodeTypes(eventData.qrCodeTypes || ["entry"])
       } else {
         toast({
           title: "Error",
@@ -201,6 +225,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         category: formData.get("category"),
         ticketType: ticketType,
         hasTicketLimit: hasTicketLimit,
+        qrCodeTypes: qrCodeTypes,
       }
 
       if (ticketType === "PREMIUM") {
@@ -438,6 +463,40 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 <option value="Health">Health & Wellness</option>
                 <option value="Other">Other</option>
               </select>
+            </div>
+
+            {/* QR Code Types */}
+            <div className="space-y-4 rounded-lg border p-4">
+              <div className="space-y-2">
+                <Label>QR Code Types for Tickets</Label>
+                <p className="text-sm text-muted-foreground">
+                  Select which QR codes you want to include in the event tickets. Entry is mandatory.
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+                  {qrCodeOptions.map((option) => (
+                    <label
+                      key={option.id}
+                      className={`flex items-center gap-2 p-3 rounded-md border cursor-pointer transition-colors ${
+                        qrCodeTypes.includes(option.id)
+                          ? "bg-[#ff7c07]/10 border-[#ff7c07]"
+                          : "bg-background hover:bg-accent"
+                      } ${option.disabled ? "opacity-75 cursor-not-allowed" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={qrCodeTypes.includes(option.id)}
+                        onChange={() => handleQrCodeTypeToggle(option.id)}
+                        disabled={option.disabled}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm font-medium">{option.label}</span>
+                      {option.disabled && (
+                        <span className="ml-auto text-xs text-muted-foreground">(Required)</span>
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Ticket Type */}

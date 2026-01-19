@@ -87,6 +87,14 @@ export async function POST(request: NextRequest) {
 
     await booking.save()
 
+    console.log("Payment Submitted - Booking Updated:", {
+      bookingId: booking._id,
+      eventSlug: booking.eventSlug,
+      status: booking.status,
+      senderBkashNumber: booking.senderBkashNumber,
+      transactionId: booking.transactionId
+    })
+
     return NextResponse.json(
       {
         success: true,

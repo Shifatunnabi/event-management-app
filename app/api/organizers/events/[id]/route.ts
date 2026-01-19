@@ -65,6 +65,7 @@ export async function GET(
       bkashNumber: event.bkashNumber,
       hasTicketLimit: event.hasCapacityLimit || false,
       totalTickets: event.totalCapacity,
+      qrCodeTypes: event.qrCodeTypes || ["entry"],
     }
 
     return NextResponse.json({

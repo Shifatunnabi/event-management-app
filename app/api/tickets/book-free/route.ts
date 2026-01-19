@@ -4,17 +4,19 @@ import connectDB from "@/lib/db/mongodb"
 import Event from "@/lib/db/models/Event"
 import User from "@/lib/db/models/User"
 import TicketBooking from "@/lib/db/models/TicketBooking"
+import Ticket from "@/lib/db/models/Ticket"
 import crypto from "crypto"
 
-// Generate unique ticket ID and QR signature
-function generateTicketData(bookingId: string, ticketIndex: number) {
+// Generate unique ticket ID and QR signature for a specific QR code type
+function generateTicketData(bookingId: string, ticketIndex: number, qrCodeType: string) {
   const ticketId = `${bookingId}-${ticketIndex + 1}`
+  const qrCode = `${ticketId}-${qrCodeType}`
   const qrSignature = crypto
     .createHash("sha256")
-    .update(`${ticketId}-${Date.now()}`)
+    .update(`${qrCode}-${Date.now()}-${Math.random()}`)
     .digest("hex")
   
-  return { ticketId, qrSignature }
+  return { ticketId, qrCode, qrSignature, qrCodeType }
 }
 
 // POST - Book free tickets (instantly creates CONFIRMED booking)
@@ -108,7 +110,8 @@ export async function POST(request: NextRequest) {
       eventSlug: event.slug,
       eventTitle: event.title,
       eventDate: event.date,
-      eventTime: event.time,
+      eventStartTime: event.startTime,
+      eventEndTime: event.endTime,
       eventLocation: event.location,
       eventImage: event.image,
       
@@ -132,20 +135,70 @@ export async function POST(request: NextRequest) {
       confirmedAt: now,
     })
 
-    // Generate tickets with QR codes
+    // Generate tickets with multiple QR codes based on event's qrCodeTypes
+    const qrCodeTypes = event.qrCodeTypes || ["entry"]
     const tickets = []
+    
     for (let i = 0; i < quantity; i++) {
-      const { ticketId, qrSignature } = generateTicketData(booking._id.toString(), i)
-      tickets.push({
-        ticketId,
-        ticketType,
-        qrCode: qrSignature, // Will be used to generate QR code image
-        qrSignature,
-      })
+      const ticketId = `${booking._id.toString()}-${i + 1}`
+      
+      // Generate a QR code for each type selected by the organizer
+      for (const qrCodeType of qrCodeTypes) {
+        const { qrCode, qrSignature } = generateTicketData(booking._id.toString(), i, qrCodeType)
+        tickets.push({
+          ticketId,
+          ticketType,
+          qrCodeType,
+          qrCode,
+          qrSignature,
+          scanned: false,
+        })
+      }
     }
 
     booking.tickets = tickets
     await booking.save()
+
+    // Create individual Ticket documents for each ticket
+    const ticketDocs = []
+    const ticketMap = new Map() // Group by ticketId
+    
+    for (const ticket of booking.tickets) {
+      if (!ticketMap.has(ticket.ticketId)) {
+        ticketMap.set(ticket.ticketId, [])
+      }
+      ticketMap.get(ticket.ticketId).push({
+        qrCodeType: ticket.qrCodeType,
+        qrData: ticket.qrCode,
+        qrSignature: ticket.qrSignature,
+        scanned: false,
+      })
+    }
+    
+    // Create one Ticket document per unique ticketId with all QR codes
+    for (const [ticketId, qrCodes] of ticketMap.entries()) {
+      const ticketDoc = new Ticket({
+        ticketId,
+        bookingId: booking._id,
+        eventId: event._id,
+        eventSlug: event.slug,
+        eventTitle: event.title,
+        eventDate: event.date,
+        eventStartTime: event.startTime,
+        eventEndTime: event.endTime,
+        eventLocation: event.location,
+        userId: booking.userId,
+        userEmail: booking.userEmail,
+        userName: booking.userName,
+        ticketType: booking.ticketType,
+        qrCodes,
+        status: "ACTIVE",
+      })
+      ticketDocs.push(ticketDoc)
+    }
+    
+    // Save all tickets
+    await Ticket.insertMany(ticketDocs)
 
     // Update ticket count and attendees
     if (selectedTicketType.hasLimit && selectedTicketType.available !== null) {

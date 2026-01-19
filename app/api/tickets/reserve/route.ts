@@ -61,6 +61,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
 
+    console.log("Reserve Ticket - Event Details:", {
+      eventId: event._id,
+      eventSlug: event.slug,
+      eventTitle: event.title,
+      hasSlug: !!event.slug
+    })
+
     if (event.status !== "PUBLISHED") {
       return NextResponse.json(
         { error: "Event is not available for booking" },
@@ -109,7 +116,8 @@ export async function POST(req: NextRequest) {
       eventSlug: event.slug,
       eventTitle: event.title,
       eventDate: event.date,
-      eventTime: event.time,
+      eventStartTime: event.startTime,
+      eventEndTime: event.endTime,
       eventLocation: event.location,
       eventImage: event.image,
       
@@ -130,6 +138,13 @@ export async function POST(req: NextRequest) {
       
       reservedAt: now,
       expiresAt,
+    })
+
+    console.log("Booking Created:", {
+      bookingId: booking._id,
+      eventSlug: booking.eventSlug,
+      status: booking.status,
+      userEmail: booking.userEmail
     })
 
     // Temporarily reduce available tickets

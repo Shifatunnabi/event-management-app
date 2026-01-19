@@ -4,6 +4,7 @@ import dbConnect from "@/lib/db/mongodb"
 import TicketBooking from "@/lib/db/models/TicketBooking"
 import Event from "@/lib/db/models/Event"
 import User from "@/lib/db/models/User"
+import Ticket from "@/lib/db/models/Ticket"
 import crypto from "crypto"
 import { generateTicketPDF } from "@/lib/utils/pdf-generator"
 import { sendTicketEmail } from "@/lib/email/ticket-email"
@@ -53,22 +54,76 @@ export async function POST(
 
     // Generate tickets if they don't exist
     if (!booking.tickets || booking.tickets.length === 0) {
+      // Get QR code types from the event
+      const qrCodeTypes = event.qrCodeTypes || ["entry"]
       const tickets = []
+      
       for (let i = 0; i < booking.numberOfTickets; i++) {
         const ticketId = `TKT-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`
-        const qrSignature = crypto
-          .createHash("sha256")
-          .update(`${ticketId}-${booking._id}-${Date.now()}`)
-          .digest("hex")
+        
+        // Generate a QR code for each type selected by the organizer
+        for (const qrCodeType of qrCodeTypes) {
+          const qrCode = `${ticketId}-${qrCodeType}`
+          const qrSignature = crypto
+            .createHash("sha256")
+            .update(`${qrCode}-${booking._id}-${Date.now()}-${Math.random()}`)
+            .digest("hex")
 
-        tickets.push({
-          ticketId,
-          ticketType: booking.ticketType,
-          qrCode: qrSignature,
-          qrSignature,
-        })
+          tickets.push({
+            ticketId,
+            ticketType: booking.ticketType,
+            qrCodeType,
+            qrCode,
+            qrSignature,
+            scanned: false,
+          })
+        }
       }
       booking.tickets = tickets
+      
+      // Save booking to get the updated tickets in the database
+      await booking.save()
+      
+      // Create individual Ticket documents for each ticket
+      const ticketDocs = []
+      const ticketMap = new Map() // Group by ticketId
+      
+      for (const ticket of booking.tickets) {
+        if (!ticketMap.has(ticket.ticketId)) {
+          ticketMap.set(ticket.ticketId, [])
+        }
+        ticketMap.get(ticket.ticketId).push({
+          qrCodeType: ticket.qrCodeType,
+          qrData: ticket.qrCode,
+          qrSignature: ticket.qrSignature,
+          scanned: false,
+        })
+      }
+      
+      // Create one Ticket document per unique ticketId with all QR codes
+      for (const [ticketId, qrCodes] of ticketMap.entries()) {
+        const ticketDoc = new Ticket({
+          ticketId,
+          bookingId: booking._id,
+          eventId: event._id,
+          eventSlug: event.slug,
+          eventTitle: event.title,
+          eventDate: event.date,
+          eventStartTime: event.startTime,
+          eventEndTime: event.endTime,
+          eventLocation: event.location,
+          userId: booking.userId,
+          userEmail: booking.userEmail,
+          userName: booking.userName,
+          ticketType: booking.ticketType,
+          qrCodes,
+          status: "ACTIVE",
+        })
+        ticketDocs.push(ticketDoc)
+      }
+      
+      // Save all tickets
+      await Ticket.insertMany(ticketDocs)
     }
 
     // Generate PDF
@@ -114,6 +169,8 @@ export async function POST(
       booking.ticketsSent = true
       booking.emailSentAt = new Date()
       booking.confirmedAt = new Date()
+      
+      // Save booking with updated status
       await booking.save()
 
       // Update event ticket counts and attendees
@@ -147,8 +204,10 @@ export async function POST(
       // Still update to CONFIRMED but mark email as not sent
       booking.status = "CONFIRMED"
       booking.ticketsSent = false
-      booking.emailRetryCount = (booking.emailRetryCount || 0) + 3
+      booking.emailRetryCount = (booking.emailRetryCount || 0) + 1
       booking.confirmedAt = new Date()
+      
+      // Save booking
       await booking.save()
 
       // Update event ticket counts and attendees even if email fails

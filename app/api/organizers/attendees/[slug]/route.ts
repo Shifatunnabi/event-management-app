@@ -41,6 +41,12 @@ export async function GET(
       .sort({ createdAt: -1 })
       .lean()
 
+    console.log("Attendees API - Fetching bookings:", {
+      slug: slug,
+      foundBookings: bookings.length,
+      bookingStatuses: bookings.map(b => ({ id: b._id, status: b.status, email: b.userEmail }))
+    })
+
     // Calculate stats
     const confirmedBookings = bookings.filter((b) => b.status === "CONFIRMED")
     const pendingBookings = bookings.filter((b) => b.status === "PENDING")

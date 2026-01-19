@@ -3,8 +3,11 @@ import mongoose, { Schema, model, models, Document } from "mongoose"
 export interface ITicket {
   ticketId: string
   ticketType: string
+  qrCodeType: string // entry, breakfast, lunch, snacks, dinner, gifts
   qrCode: string
   qrSignature: string
+  scanned: boolean
+  scannedAt?: Date
 }
 
 export interface ITicketBooking extends Document {
@@ -13,7 +16,8 @@ export interface ITicketBooking extends Document {
   eventSlug: string
   eventTitle: string
   eventDate: Date
-  eventTime: string
+  eventStartTime?: string
+  eventEndTime?: string
   eventLocation: string
   eventImage: string
   
@@ -66,6 +70,11 @@ const TicketSchema = new Schema<ITicket>({
     type: String,
     required: true,
   },
+  qrCodeType: {
+    type: String,
+    required: true,
+    enum: ["entry", "breakfast", "lunch", "snacks", "dinner", "gifts"],
+  },
   qrCode: {
     type: String,
     required: true,
@@ -73,6 +82,13 @@ const TicketSchema = new Schema<ITicket>({
   qrSignature: {
     type: String,
     required: true,
+  },
+  scanned: {
+    type: Boolean,
+    default: false,
+  },
+  scannedAt: {
+    type: Date,
   },
 })
 
@@ -95,9 +111,17 @@ const TicketBookingSchema = new Schema<ITicketBooking>(
       type: Date,
       required: true,
     },
+    eventStartTime: {
+      type: String,
+      required: false,
+    },
+    eventEndTime: {
+      type: String,
+      required: false,
+    },
     eventTime: {
       type: String,
-      required: true,
+      required: false,
     },
     eventLocation: {
       type: String,

@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth"
 import connectDB from "@/lib/db/mongodb"
 import Event from "@/lib/db/models/Event"
 import User from "@/lib/db/models/User"
-import Ticket from "@/lib/db/models/Ticket"
+import TicketBooking from "@/lib/db/models/TicketBooking"
 
 export async function GET() {
   try {
@@ -46,15 +46,15 @@ export async function GET() {
     // 4. Total Attendees (sum of all attendees from all events)
     const totalAttendees = events.reduce((sum, event) => sum + (event.attendees || 0), 0)
 
-    // 5. Total Revenue (calculate from tickets)
+    // 5. Total Revenue (calculate from CONFIRMED ticket bookings)
     const eventIds = events.map(event => event._id)
-    const tickets = await Ticket.find({ 
+    const bookings = await TicketBooking.find({ 
       eventId: { $in: eventIds },
-      status: "APPROVED"
+      status: "CONFIRMED"
     }).lean()
     
-    const totalRevenue = tickets.reduce((sum, ticket) => {
-      return sum + (ticket.totalAmount || 0)
+    const totalRevenue = bookings.reduce((sum, booking) => {
+      return sum + (booking.totalAmount || 0)
     }, 0)
 
     // 6. Join Date (user's createdAt date)

@@ -8,28 +8,45 @@ export interface IScanHistory {
   scannedEventTitle?: string
   isValidEvent: boolean
   location?: string
+  qrCodeType?: string // Track which QR code type was scanned
+}
+
+export interface IQRCode {
+  qrCodeType: string // entry, breakfast, lunch, snacks, dinner, gifts
+  qrData: string
+  qrSignature: string
+  scanned: boolean
+  scannedAt?: Date
 }
 
 export interface ITicket extends Document {
   _id: string
+  ticketId: string
+  bookingId: mongoose.Types.ObjectId
   eventId: mongoose.Types.ObjectId
+  eventSlug: string
   eventTitle: string
-  eventImage: string
+  eventImage?: string
   eventDate: Date
+  eventStartTime?: string
+  eventEndTime?: string
   eventLocation: string
   
   userId: mongoose.Types.ObjectId
   userName: string
   userEmail: string
   
-  orderId: mongoose.Types.ObjectId
+  orderId?: mongoose.Types.ObjectId
   
   ticketType: string
-  price: number
+  price?: number
   
-  // QR Code data
-  qrData: string
-  qrSignature: string
+  // QR Codes - multiple codes for different purposes
+  qrCodes: IQRCode[]
+  
+  // Legacy single QR (for backward compatibility)
+  qrData?: string
+  qrSignature?: string
   
   // Status
   status: "ACTIVE" | "SCANNED" | "WRONG_EVENT" | "EXPIRED" | "CANCELLED"
@@ -53,13 +70,48 @@ const ScanHistorySchema = new Schema<IScanHistory>({
   scannedEventTitle: String,
   isValidEvent: { type: Boolean, required: true },
   location: String,
+  qrCodeType: String,
+})
+
+const QRCodeSchema = new Schema<IQRCode>({
+  qrCodeType: {
+    type: String,
+    required: true,
+    enum: ["entry", "breakfast", "lunch", "snacks", "dinner", "gifts"],
+  },
+  qrData: {
+    type: String,
+    required: true,
+  },
+  qrSignature: {
+    type: String,
+    required: true,
+  },
+  scanned: {
+    type: Boolean,
+    default: false,
+  },
+  scannedAt: Date,
 })
 
 const TicketSchema = new Schema<ITicket>(
   {
+    ticketId: {
+      type: String,
+      required: true,
+    },
+    bookingId: {
+      type: Schema.Types.ObjectId,
+      ref: "TicketBooking",
+      required: true,
+    },
     eventId: {
       type: Schema.Types.ObjectId,
       ref: "Event",
+      required: true,
+    },
+    eventSlug: {
+      type: String,
       required: true,
     },
     eventTitle: {
@@ -68,11 +120,19 @@ const TicketSchema = new Schema<ITicket>(
     },
     eventImage: {
       type: String,
-      required: true,
+      required: false,
     },
     eventDate: {
       type: Date,
       required: true,
+    },
+    eventStartTime: {
+      type: String,
+      required: false,
+    },
+    eventEndTime: {
+      type: String,
+      required: false,
     },
     eventLocation: {
       type: String,
@@ -96,7 +156,7 @@ const TicketSchema = new Schema<ITicket>(
     orderId: {
       type: Schema.Types.ObjectId,
       ref: "Order",
-      required: true,
+      required: false,
     },
     
     ticketType: {
@@ -105,18 +165,24 @@ const TicketSchema = new Schema<ITicket>(
     },
     price: {
       type: Number,
-      required: true,
+      required: false,
       min: 0,
     },
     
+    // QR Codes - multiple codes for different purposes
+    qrCodes: {
+      type: [QRCodeSchema],
+      default: [],
+    },
+    
+    // Legacy single QR code fields (for backward compatibility)
     qrData: {
       type: String,
-      required: true,
-      unique: true,
+      required: false,
     },
     qrSignature: {
       type: String,
-      required: true,
+      required: false,
     },
     
     status: {
@@ -150,7 +216,7 @@ const TicketSchema = new Schema<ITicket>(
 // Indexes
 TicketSchema.index({ userId: 1, eventId: 1 })
 TicketSchema.index({ eventId: 1, status: 1 })
-TicketSchema.index({ qrSignature: 1 }, { unique: true }) // QR signature must be unique
+TicketSchema.index({ "qrCodes.qrSignature": 1 })
 TicketSchema.index({ orderId: 1 })
 
 const Ticket = models.Ticket || model<ITicket>("Ticket", TicketSchema)

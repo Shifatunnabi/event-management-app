@@ -31,6 +31,9 @@ export interface IEvent extends Document {
   totalCapacity: number | null
   ticketsSold: number
   
+  // QR Code Types
+  qrCodeTypes: string[]
+  
   // Ticket types
   ticketTypes: ITicketType[]
   
@@ -137,6 +140,12 @@ const EventSchema = new Schema<IEvent>(
     ticketsSold: {
       type: Number,
       default: 0,
+    },
+    
+    qrCodeTypes: {
+      type: [String],
+      enum: ["entry", "breakfast", "lunch", "snacks", "dinner", "gifts"],
+      default: ["entry"],
     },
     
     ticketTypes: {

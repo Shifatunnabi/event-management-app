@@ -48,6 +48,8 @@ export async function POST(request: NextRequest) {
     const hasTicketLimit = formData.get("hasTicketLimit") === "true"
     const totalTickets = formData.get("totalTickets")
     const imageUrl = formData.get("imageUrl") as string
+    const qrCodeTypesStr = formData.get("qrCodeTypes") as string
+    const qrCodeTypes = qrCodeTypesStr ? JSON.parse(qrCodeTypesStr) : ["entry"]
 
     // Helper function to convert 24-hour time to 12-hour format with AM/PM
     const convertTo12Hour = (time24: string): string => {
@@ -172,6 +174,7 @@ export async function POST(request: NextRequest) {
       totalCapacity: hasTicketLimit && totalTickets ? parseInt(totalTickets as string, 10) : null,
       ticketsSold: 0,
       ticketTypes,
+      qrCodeTypes: qrCodeTypes,
       bkashNumber: ticketType === "PREMIUM" ? bkashNumber : undefined,
       status: "PUBLISHED",
       isFeatured: false,
