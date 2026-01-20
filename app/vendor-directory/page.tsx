@@ -64,6 +64,7 @@ export default function VendorDirectoryPage() {
         title: "Error",
         description: "Failed to load vendors",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsLoading(false)

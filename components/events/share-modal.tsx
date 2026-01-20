@@ -35,6 +35,7 @@ export default function ShareModal({ eventTitle, eventSlug }: ShareModalProps) {
       toast({
         title: "Link copied!",
         description: "Event link has been copied to clipboard",
+        duration: 2000,
       })
       setTimeout(() => setCopied(false), 2000)
     } catch (error) {
@@ -42,6 +43,7 @@ export default function ShareModal({ eventTitle, eventSlug }: ShareModalProps) {
         title: "Failed to copy",
         description: "Please copy the link manually",
         variant: "destructive",
+        duration: 2000,
       })
     }
   }

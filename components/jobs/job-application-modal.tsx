@@ -66,6 +66,7 @@ export default function JobApplicationModal({
         title: "Error",
         description: "Please fill all required fields",
         variant: "destructive",
+        duration: 2000,
       })
       return
     }
@@ -87,6 +88,7 @@ export default function JobApplicationModal({
         toast({
           title: "Success",
           description: "Application submitted successfully! The organizer will review your application.",
+          duration: 2000,
         })
         resetForm()
         onOpenChange(false)
@@ -99,6 +101,7 @@ export default function JobApplicationModal({
         title: "Error",
         description: error.message || "Failed to submit application",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsSubmitting(false)

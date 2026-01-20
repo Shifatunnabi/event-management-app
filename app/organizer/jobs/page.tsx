@@ -86,6 +86,7 @@ export default function JobsBoardPage() {
         title: "Error",
         description: "Failed to load jobs",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsLoading(false)
@@ -100,6 +101,7 @@ export default function JobsBoardPage() {
         title: "Error",
         description: "Please fill all required fields",
         variant: "destructive",
+        duration: 2000,
       })
       return
     }
@@ -123,6 +125,7 @@ export default function JobsBoardPage() {
         toast({
           title: "Success",
           description: editingJob ? "Job updated successfully" : "Job posted successfully",
+          duration: 2000,
         })
         setCreateModalOpen(false)
         setEditModalOpen(false)
@@ -136,6 +139,7 @@ export default function JobsBoardPage() {
         title: "Error",
         description: error.message || "Failed to post job",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsSubmitting(false)
@@ -172,6 +176,7 @@ export default function JobsBoardPage() {
         toast({
           title: "Success",
           description: "Job deleted successfully",
+          duration: 2000,
         })
         fetchJobs()
       } else {
@@ -182,6 +187,7 @@ export default function JobsBoardPage() {
         title: "Error",
         description: "Failed to delete job",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsDeleting(false)

@@ -66,6 +66,7 @@ export default function StaticAdsTab() {
         title: "Error",
         description: "Failed to load static ads",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsLoading(false)
@@ -104,6 +105,7 @@ export default function StaticAdsTab() {
         toast({
           title: "Success",
           description: "Poster image uploaded successfully",
+          duration: 2000,
         })
       }
     } catch (error) {
@@ -112,6 +114,7 @@ export default function StaticAdsTab() {
         title: "Error",
         description: "Failed to upload poster image",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsUploadingImage(false)
@@ -124,6 +127,7 @@ export default function StaticAdsTab() {
         title: "Error",
         description: "Please fill all fields and upload a poster image",
         variant: "destructive",
+        duration: 2000,
       })
       return
     }
@@ -146,6 +150,7 @@ export default function StaticAdsTab() {
         toast({
           title: "Success",
           description: editingAdId ? "Ad updated successfully" : "Static ad uploaded successfully",
+          duration: 2000,
         })
         setFormData({ 
           companyName: "", 
@@ -163,6 +168,7 @@ export default function StaticAdsTab() {
         title: "Error",
         description: error.message || "Failed to save ad",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsUploading(false)
@@ -204,6 +210,7 @@ export default function StaticAdsTab() {
         toast({
           title: "Success",
           description: `Ad ${!currentActive ? "activated" : "deactivated"} successfully`,
+          duration: 2000,
         })
         fetchAds()
       } else {
@@ -214,6 +221,7 @@ export default function StaticAdsTab() {
         title: "Error",
         description: error.message || "Failed to update ad",
         variant: "destructive",
+        duration: 2000,
       })
     }
   }
@@ -233,6 +241,7 @@ export default function StaticAdsTab() {
         toast({
           title: "Success",
           description: "Ad deleted successfully",
+          duration: 2000,
         })
         fetchAds()
       } else {
@@ -243,6 +252,7 @@ export default function StaticAdsTab() {
         title: "Error",
         description: error.message || "Failed to delete ad",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsDeleting(false)

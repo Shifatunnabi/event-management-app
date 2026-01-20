@@ -78,6 +78,7 @@ export default function BuyTicketFlow({ event, trigger }: BuyTicketFlowProps) {
         title: "Authentication Required",
         description: "Please sign in to purchase tickets",
         variant: "destructive",
+        duration: 2000,
       });
       router.push("/auth/signin");
       return;
@@ -122,6 +123,7 @@ export default function BuyTicketFlow({ event, trigger }: BuyTicketFlowProps) {
         title: "Reservation Failed",
         description: error.message,
         variant: "destructive",
+        duration: 2000,
       });
     } finally {
       setIsLoading(false);
@@ -136,6 +138,7 @@ export default function BuyTicketFlow({ event, trigger }: BuyTicketFlowProps) {
         title: "Invalid Amount",
         description: `Please enter exactly ৳${totalAmount.toFixed(2)}`,
         variant: "destructive",
+        duration: 2000,
       });
       return;
     }
@@ -174,12 +177,14 @@ export default function BuyTicketFlow({ event, trigger }: BuyTicketFlowProps) {
       toast({
         title: "Success!",
         description: `${quantity} ticket(s) purchased successfully`,
+        duration: 2000,
       });
     } catch (error: any) {
       toast({
         title: "Payment Failed",
         description: error.message,
         variant: "destructive",
+        duration: 2000,
       });
     } finally {
       setIsLoading(false);

@@ -83,6 +83,7 @@ export default function ApplyFeatureModal({ open, onOpenChange, onSuccess }: App
         toast({
           title: "Success",
           description: "Photo uploaded successfully",
+          duration: 2000,
         })
       }
     } catch (error) {
@@ -91,6 +92,7 @@ export default function ApplyFeatureModal({ open, onOpenChange, onSuccess }: App
         title: "Error",
         description: "Failed to upload photo",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsUploadingPhoto(false)
@@ -106,6 +108,7 @@ export default function ApplyFeatureModal({ open, onOpenChange, onSuccess }: App
         title: "Error",
         description: "You can only upload up to 5 portfolio images",
         variant: "destructive",
+        duration: 2000,
       })
       return
     }
@@ -142,6 +145,7 @@ export default function ApplyFeatureModal({ open, onOpenChange, onSuccess }: App
       toast({
         title: "Success",
         description: "Portfolio images uploaded successfully",
+        duration: 2000,
       })
     } catch (error) {
       console.error("Error uploading portfolio:", error)
@@ -149,6 +153,7 @@ export default function ApplyFeatureModal({ open, onOpenChange, onSuccess }: App
         title: "Error",
         description: "Failed to upload portfolio images",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsUploadingPortfolio(false)
@@ -181,6 +186,7 @@ export default function ApplyFeatureModal({ open, onOpenChange, onSuccess }: App
         title: "Error",
         description: "Please fill all required fields",
         variant: "destructive",
+        duration: 2000,
       })
       return
     }
@@ -214,6 +220,7 @@ export default function ApplyFeatureModal({ open, onOpenChange, onSuccess }: App
         toast({
           title: "Success",
           description: "Application submitted successfully! We'll review it soon.",
+          duration: 2000,
         })
         resetForm()
         onOpenChange(false)
@@ -228,6 +235,7 @@ export default function ApplyFeatureModal({ open, onOpenChange, onSuccess }: App
         title: "Error",
         description: error.message || "Failed to submit application",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsSubmitting(false)

@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import AdPlaceholder from "@/components/ui/ad-placeholder"
-import ShareModal from "@/components/ui/share-modal"
+import ShareModal from "@/components/events/share-modal"
 import BuyTicketFlowNew from "@/components/tickets/BuyTicketFlowNew"
 import LoadingScreen from "@/components/ui/loading-screen"
 import StaticAdDisplay from "@/components/ads/static-ad-display"
@@ -50,8 +50,6 @@ interface EventType {
 export default function EventDetailsPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params)
   const [event, setEvent] = useState<EventType | null>(null)
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
-  const [currentUrl, setCurrentUrl] = useState("")
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -68,7 +66,6 @@ export default function EventDetailsPage({ params }: { params: Promise<{ slug: s
         const data = await response.json()
         if (data.success && data.event) {
           setEvent(data.event)
-          setCurrentUrl(window.location.href)
         } else {
           console.error("Event data not found in response")
         }
@@ -251,14 +248,10 @@ export default function EventDetailsPage({ params }: { params: Promise<{ slug: s
                   }
                 />
               )}
-              <Button 
-                size="lg" 
-                variant="outline"
-                onClick={() => setIsShareModalOpen(true)}
-              >
-                <Share2 className="mr-2 h-5 w-5" />
-                Share
-              </Button>
+              <ShareModal 
+                eventTitle={event.title} 
+                eventSlug={event.slug}
+              />
             </div>
           </div>
 

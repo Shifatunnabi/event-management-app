@@ -32,6 +32,7 @@ export default function ShareModal({ open, onOpenChange, url, title }: ShareModa
       toast({
         title: "Link copied!",
         description: "Event link has been copied to clipboard",
+        duration: 2000,
       })
       setTimeout(() => setCopied(false), 2000)
     } catch (error) {
@@ -39,6 +40,7 @@ export default function ShareModal({ open, onOpenChange, url, title }: ShareModa
         title: "Failed to copy",
         description: "Please copy the link manually",
         variant: "destructive",
+        duration: 2000,
       })
     }
   }
@@ -64,6 +66,7 @@ export default function ShareModal({ open, onOpenChange, url, title }: ShareModa
     toast({
       title: "Link copied for Instagram",
       description: "Paste this link in your Instagram story or post",
+      duration: 2000,
     })
   }
 

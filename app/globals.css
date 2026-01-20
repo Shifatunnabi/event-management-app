@@ -247,3 +247,10 @@
 #qr-reader__scan_region {
   border-radius: 0.5rem !important;
 }
+/* Print styles for tickets */
+@media print {
+  .page-break {
+    page-break-after: always;
+    break-after: page;
+  }
+}

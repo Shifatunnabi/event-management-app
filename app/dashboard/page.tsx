@@ -22,7 +22,8 @@ interface TicketGroup {
     slug: string
     title: string
     date: string
-    time: string
+    startTime: string
+    endTime: string
     location: string
     locationLink?: string
     organizerName: string
@@ -38,6 +39,9 @@ interface TicketGroup {
     purchaseDate: string
     scannedAt?: string
     emailSent: boolean
+    attendeeName: string
+    attendeeEmail: string
+    attendeePhone: string
   }>
   totalTickets: number
   totalAmount: number
@@ -136,6 +140,7 @@ export default function DashboardPage() {
         title: "Invalid file type",
         description: "Please upload an image file",
         variant: "destructive",
+        duration: 2000,
       })
       return
     }
@@ -146,6 +151,7 @@ export default function DashboardPage() {
         title: "File too large",
         description: "Please upload an image smaller than 5MB",
         variant: "destructive",
+        duration: 2000,
       })
       return
     }
@@ -183,6 +189,7 @@ export default function DashboardPage() {
           toast({
             title: "Success",
             description: "Profile photo updated successfully",
+            duration: 2000,
           })
         }
       } else {
@@ -193,6 +200,7 @@ export default function DashboardPage() {
         title: "Upload failed",
         description: error.message || "Failed to upload image",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsUploadingImage(false)
@@ -205,6 +213,7 @@ export default function DashboardPage() {
         title: "Validation error",
         description: "Name and phone are required",
         variant: "destructive",
+        duration: 2000,
       })
       return
     }
@@ -228,6 +237,7 @@ export default function DashboardPage() {
         toast({
           title: "Success",
           description: "Profile updated successfully",
+          duration: 2000,
         })
       } else {
         throw new Error(data.error || "Failed to update profile")
@@ -237,6 +247,7 @@ export default function DashboardPage() {
         title: "Update failed",
         description: error.message || "Failed to update profile",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsSaving(false)
@@ -533,7 +544,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="flex items-center gap-2 text-gray-600">
                           <Calendar className="h-4 w-4 shrink-0 text-green-600" />
-                          <span>{group.event.time}</span>
+                          <span>{group.event.startTime} - {group.event.endTime}</span>
                         </div>
                       </div>
                     </div>
@@ -610,11 +621,15 @@ export default function DashboardPage() {
           event={{
             title: selectedGroup.event.title,
             date: selectedGroup.event.date,
-            time: selectedGroup.event.time,
+            startTime: selectedGroup.event.startTime,
+            endTime: selectedGroup.event.endTime,
             location: selectedGroup.event.location,
             organizerName: selectedGroup.event.organizerName,
             image: selectedGroup.event.image,
           }}
+          attendeeName={selectedGroup.tickets[0]?.attendeeName}
+          attendeeEmail={selectedGroup.tickets[0]?.attendeeEmail}
+          attendeePhone={selectedGroup.tickets[0]?.attendeePhone}
         />
       )}
     </div>

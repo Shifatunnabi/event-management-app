@@ -83,6 +83,7 @@ export default function EventAttendeesPage({ params }: { params: Promise<{ slug:
           title: "Error",
           description: result.error || "Failed to load attendees",
           variant: "destructive",
+          duration: 2000,
         })
       }
     } catch (error) {
@@ -91,6 +92,7 @@ export default function EventAttendeesPage({ params }: { params: Promise<{ slug:
         title: "Error",
         description: "Failed to load attendees",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsLoading(false)
@@ -118,7 +120,8 @@ export default function EventAttendeesPage({ params }: { params: Promise<{ slug:
       if (response.ok) {
         toast({
           title: "Success!",
-          description: "Tickets sent successfully to the attendee",
+          description: "Tickets confirmed! Email with tickets will be sent shortly.",
+          duration: 2000,
         })
         fetchAttendees() // Refresh the list
       } else {
@@ -126,6 +129,7 @@ export default function EventAttendeesPage({ params }: { params: Promise<{ slug:
           title: "Error",
           description: result.error || "Failed to send tickets",
           variant: "destructive",
+          duration: 2000,
         })
       }
     } catch (error) {
@@ -134,6 +138,7 @@ export default function EventAttendeesPage({ params }: { params: Promise<{ slug:
         title: "Error",
         description: "Failed to send tickets",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setSendingTicketId(null)
@@ -155,6 +160,7 @@ export default function EventAttendeesPage({ params }: { params: Promise<{ slug:
         toast({
           title: "Success!",
           description: "Email sent successfully",
+          duration: 2000,
         })
         fetchAttendees() // Refresh the list
       } else {
@@ -162,6 +168,7 @@ export default function EventAttendeesPage({ params }: { params: Promise<{ slug:
           title: "Error",
           description: result.error || "Failed to resend email",
           variant: "destructive",
+          duration: 2000,
         })
       }
     } catch (error) {
@@ -170,6 +177,7 @@ export default function EventAttendeesPage({ params }: { params: Promise<{ slug:
         title: "Error",
         description: "Failed to resend email",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setResendingEmailId(null)

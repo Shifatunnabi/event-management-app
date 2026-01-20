@@ -49,7 +49,7 @@ export default function VendorApplicationsPage() {
       const data = await response.json()
       if (data.success) { setApplications(data.applications) }
     } catch (error) {
-      toast({ title: "Error", description: "Failed to load applications", variant: "destructive" })
+      toast({ title: "Error", description: "Failed to load applications", variant: "destructive", duration: 2000 })
     } finally {
       setIsLoading(false)
     }
@@ -71,12 +71,12 @@ export default function VendorApplicationsPage() {
       })
       const data = await response.json()
       if (data.success) {
-        toast({ title: "Success", description: "Vendor approved successfully" })
+        toast({ title: "Success", description: "Vendor approved successfully", duration: 2000 })
         fetchApplications()
         setDetailsModalOpen(false)
       } else { throw new Error(data.error) }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to approve vendor", variant: "destructive" })
+      toast({ title: "Error", description: error.message || "Failed to approve vendor", variant: "destructive", duration: 2000 })
     } finally {
       setActionLoading(false)
       setApproveDialogOpen(false)
@@ -95,12 +95,12 @@ export default function VendorApplicationsPage() {
       })
       const data = await response.json()
       if (data.success) {
-        toast({ title: "Success", description: "Vendor application rejected" })
+        toast({ title: "Success", description: "Vendor application rejected", duration: 2000 })
         fetchApplications()
         setDetailsModalOpen(false)
       } else { throw new Error(data.error) }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to reject vendor", variant: "destructive" })
+      toast({ title: "Error", description: error.message || "Failed to reject vendor", variant: "destructive", duration: 2000 })
     } finally {
       setActionLoading(false)
       setRejectDialogOpen(false)

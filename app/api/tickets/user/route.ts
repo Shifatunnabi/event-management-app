@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
             slug: event.slug,
             title: event.title,
             date: event.date,
-            time: event.time,
+            startTime: event.startTime || "",
+            endTime: event.endTime || "",
             location: event.location,
             locationLink: event.locationLink,
             organizerName: event.organizerName || "Event Organizer",
@@ -105,6 +106,9 @@ export async function GET(request: NextRequest) {
           price: group.event.ticketPrice,
           purchaseDate: booking.createdAt,
           emailSent: booking.ticketsSent || false,
+          attendeeName: booking.userName,
+          attendeeEmail: booking.userEmail,
+          attendeePhone: booking.userPhone,
         })
 
         group.totalTickets++

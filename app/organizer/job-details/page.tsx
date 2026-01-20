@@ -76,6 +76,7 @@ export default function JobDetailsPage() {
           title: "Error",
           description: data.error || "Failed to load job details",
           variant: "destructive",
+          duration: 2000,
         })
       }
     } catch (error) {
@@ -84,6 +85,7 @@ export default function JobDetailsPage() {
         title: "Error",
         description: "Failed to load job details",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsLoading(false)

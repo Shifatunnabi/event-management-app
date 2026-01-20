@@ -88,6 +88,7 @@ export default function AdminEventManagementPage() {
         title: "Error",
         description: "Failed to load events",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsLoading(false)

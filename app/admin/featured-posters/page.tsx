@@ -63,6 +63,7 @@ export default function FeaturedPostersPage() {
         title: "Error",
         description: "Failed to load posters",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsLoading(false)
@@ -101,6 +102,7 @@ export default function FeaturedPostersPage() {
         toast({
           title: "Success",
           description: "Poster image uploaded successfully",
+          duration: 2000,
         })
       }
     } catch (error) {
@@ -109,6 +111,7 @@ export default function FeaturedPostersPage() {
         title: "Error",
         description: "Failed to upload poster image",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsUploadingImage(false)
@@ -121,6 +124,7 @@ export default function FeaturedPostersPage() {
         title: "Error",
         description: "Please fill all fields and upload a poster image",
         variant: "destructive",
+        duration: 2000,
       })
       return
     }
@@ -146,6 +150,7 @@ export default function FeaturedPostersPage() {
         toast({
           title: "Success",
           description: editingPosterId ? "Poster updated successfully" : "Featured poster uploaded successfully",
+          duration: 2000,
         })
         setFormData({ eventName: "", eventLink: "", posterUrl: "" })
         setEditingPosterId(null)
@@ -158,6 +163,7 @@ export default function FeaturedPostersPage() {
         title: "Error",
         description: error.message || "Failed to save poster",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsUploading(false)
@@ -194,6 +200,7 @@ export default function FeaturedPostersPage() {
         toast({
           title: "Success",
           description: `Poster ${!currentActive ? "activated" : "deactivated"} successfully`,
+          duration: 2000,
         })
         fetchPosters()
       } else {
@@ -204,6 +211,7 @@ export default function FeaturedPostersPage() {
         title: "Error",
         description: error.message || "Failed to update poster",
         variant: "destructive",
+        duration: 2000,
       })
     }
   }
@@ -223,6 +231,7 @@ export default function FeaturedPostersPage() {
         toast({
           title: "Success",
           description: "Poster deleted successfully",
+          duration: 2000,
         })
         fetchPosters()
       } else {
@@ -233,6 +242,7 @@ export default function FeaturedPostersPage() {
         title: "Error",
         description: error.message || "Failed to delete poster",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsDeleting(false)

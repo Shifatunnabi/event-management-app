@@ -112,6 +112,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           title: "Error",
           description: "Event not found",
           variant: "destructive",
+          duration: 2000,
         })
         router.push("/organizer/attendees")
       }
@@ -121,6 +122,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         title: "Error",
         description: "Failed to load event",
         variant: "destructive",
+        duration: 2000,
       })
       router.push("/organizer/attendees")
     } finally {
@@ -169,6 +171,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         toast({
           title: "Image uploaded successfully",
           description: "Your event poster has been updated.",
+          duration: 2000,
         })
       } catch (error) {
         console.error("Error uploading image:", error)
@@ -176,6 +179,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           title: "Error",
           description: "Failed to upload image. Please try again.",
           variant: "destructive",
+          duration: 2000,
         })
         setPosterPreview(event?.image || null)
         setUploadedImageUrl(event?.image || null)
@@ -254,6 +258,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       toast({
         title: "Success!",
         description: "Event updated successfully",
+        duration: 2000,
       })
 
       router.push("/organizer/attendees")
@@ -264,6 +269,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to update event",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsSubmitting(false)

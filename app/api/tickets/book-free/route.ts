@@ -193,8 +193,18 @@ export async function POST(request: NextRequest) {
         ticketType: booking.ticketType,
         qrCodes,
         status: "ACTIVE",
+        // Set legacy qrData to avoid unique constraint issues (use first QR code's data)
+        qrData: qrCodes.length > 0 ? qrCodes[0].qrData : ticketId,
+        qrSignature: qrCodes.length > 0 ? qrCodes[0].qrSignature : "",
       })
       ticketDocs.push(ticketDoc)
+    }
+    
+    // Try to drop the old qrData unique index if it exists (one-time migration)
+    try {
+      await Ticket.collection.dropIndex("qrData_1")
+    } catch (e) {
+      // Index might not exist or already dropped, continue
     }
     
     // Save all tickets

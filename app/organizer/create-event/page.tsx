@@ -68,6 +68,7 @@ export default function CreateEventPage() {
           toast({
             title: "Compressing image...",
             description: "Your image is being compressed to optimize upload.",
+            duration: 2000,
           })
 
           const options = {
@@ -82,6 +83,7 @@ export default function CreateEventPage() {
           toast({
             title: "Image compressed successfully",
             description: `Size reduced from ${fileSizeInMB.toFixed(2)}MB to ${(compressedFile.size / (1024 * 1024)).toFixed(2)}MB`,
+            duration: 2000,
           })
         }
 
@@ -106,6 +108,7 @@ export default function CreateEventPage() {
         toast({
           title: "Image uploaded successfully",
           description: "Your event poster has been uploaded.",
+          duration: 2000,
         })
       } catch (error) {
         console.error("Error uploading image:", error)
@@ -113,6 +116,7 @@ export default function CreateEventPage() {
           title: "Error",
           description: "Failed to upload image. Please try again.",
           variant: "destructive",
+          duration: 2000,
         })
         // Reset on error
         setPoster(null)
@@ -169,6 +173,7 @@ export default function CreateEventPage() {
       toast({
         title: "Success!",
         description: "Event created successfully",
+        duration: 2000,
       })
 
       router.push("/organizer/dashboard")
@@ -179,6 +184,7 @@ export default function CreateEventPage() {
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to create event",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsSubmitting(false)

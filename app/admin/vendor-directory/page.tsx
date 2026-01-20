@@ -101,6 +101,7 @@ export default function VendorDirectoryPage() {
         title: "Error",
         description: "Failed to load vendors",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsLoading(false)
@@ -146,6 +147,7 @@ export default function VendorDirectoryPage() {
         toast({
           title: "Success",
           description: "Vendor removed successfully",
+          duration: 2000,
         })
         fetchVendors()
         setDetailsModalOpen(false)
@@ -157,6 +159,7 @@ export default function VendorDirectoryPage() {
         title: "Error",
         description: error.message || "Failed to delete vendor",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setDeleteLoading(false)

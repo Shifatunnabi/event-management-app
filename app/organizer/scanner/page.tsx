@@ -19,6 +19,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -30,14 +36,17 @@ import { useToast } from "@/hooks/use-toast"
 interface ScanResult {
   success: boolean
   message: string
+  qrCodeType?: string
   ticket?: {
     id: string
     status: string
     ticketType: string
     price: number
+    qrCodeType?: string
     attendee: {
       name: string
       email: string
+      phone?: string
     }
     event?: {
       title: string
@@ -53,9 +62,15 @@ interface ScanResult {
     scannedEvent?: {
       title: string
     }
+    allQRCodes?: Array<{
+      type: string
+      scanned: boolean
+      scannedAt?: Date
+    }>
   }
   alreadyScanned?: boolean
   wrongEvent?: boolean
+  wrongQRType?: boolean
   wasWrongEvent?: boolean
 }
 
@@ -70,17 +85,41 @@ export default function ScannerPage() {
   const { toast } = useToast()
   
   const [scanResult, setScanResult] = useState<ScanResult | null>(null)
+  const [showResultDialog, setShowResultDialog] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
   const [isInitializing, setIsInitializing] = useState(false)
   const [manualTicketId, setManualTicketId] = useState("")
   const [selectedEvent, setSelectedEvent] = useState("")
+  const [selectedQRType, setSelectedQRType] = useState("entry")
   const [events, setEvents] = useState<Event[]>([])
   const [stats, setStats] = useState({ scanned: 0, valid: 0, invalid: 0 })
   const [cameraError, setCameraError] = useState<string | null>(null)
   
+  // Use ref to avoid stale closure in scanner callback
+  const selectedQRTypeRef = useRef(selectedQRType)
+  const selectedEventRef = useRef(selectedEvent)
+  
+  const qrTypes = [
+    { value: "entry", label: "Entry" },
+    { value: "breakfast", label: "Breakfast" },
+    { value: "lunch", label: "Lunch" },
+    { value: "snacks", label: "Snacks" },
+    { value: "dinner", label: "Dinner" },
+    { value: "gifts", label: "Gifts" },
+  ]
+  
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const statsStorageKey = useRef("")
   const readerDivId = "qr-reader"
+
+  // Keep refs in sync with state to avoid stale closure issues
+  useEffect(() => {
+    selectedQRTypeRef.current = selectedQRType
+  }, [selectedQRType])
+
+  useEffect(() => {
+    selectedEventRef.current = selectedEvent
+  }, [selectedEvent])
 
   // Load stats from localStorage when event changes
   useEffect(() => {
@@ -105,6 +144,30 @@ export default function ScannerPage() {
       localStorage.setItem(statsStorageKey.current, JSON.stringify(stats))
     }
   }, [stats])
+
+  const handleCloseResultDialog = () => {
+    setShowResultDialog(false)
+    setScanResult(null)
+    // Auto-restart scanner after closing dialog
+    if (isScanning) {
+      setTimeout(() => {
+        if (scannerRef.current) {
+          try {
+            scannerRef.current.resume()
+          } catch (e) {
+            // Ignore if resume fails
+          }
+        }
+      }, 100)
+    }
+  }
+
+  const restartScanner = async () => {
+    await stopScanner()
+    setTimeout(() => {
+      startScanner()
+    }, 300)
+  }
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -160,6 +223,17 @@ export default function ScannerPage() {
         title: "No Event Selected",
         description: "Please select an event first",
         variant: "destructive",
+        duration: 2000,
+      })
+      return
+    }
+    
+    if (!selectedQRType) {
+      toast({
+        title: "No QR Type Selected",
+        description: "Please select a QR type first",
+        variant: "destructive",
+        duration: 2000,
       })
       return
     }
@@ -226,6 +300,7 @@ export default function ScannerPage() {
         title: "Camera Error",
         description: err.message || "Unable to access camera. Please check permissions.",
         variant: "destructive",
+        duration: 2000,
       })
     }
   }
@@ -277,19 +352,8 @@ export default function ScannerPage() {
         success: false,
         message: "Invalid QR code format",
       })
-      setTimeout(() => setScanResult(null), 5000)
+      setShowResultDialog(true)
     }
-
-    // Resume scanning after 3 seconds
-    setTimeout(() => {
-      if (scannerRef.current && isScanning) {
-        try {
-          scannerRef.current.resume()
-        } catch (e) {
-          // Ignore if resume fails
-        }
-      }
-    }, 3000)
   }
 
   const handleScanError = (errorMessage: string) => {
@@ -298,13 +362,15 @@ export default function ScannerPage() {
 
   const validateTicket = async (qrData: string, qrSignature: string) => {
     try {
+      // Use ref values to get the latest selected QR type and event
       const response = await fetch("/api/tickets/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           qrData,
           qrSignature,
-          eventId: selectedEvent || undefined,
+          eventId: selectedEventRef.current || undefined,
+          expectedQRType: selectedQRTypeRef.current,
         }),
       })
 
@@ -327,6 +393,8 @@ export default function ScannerPage() {
           message: data.error || "Ticket validation failed",
           alreadyScanned: data.alreadyScanned,
           wrongEvent: data.wrongEvent,
+          wrongQRType: data.wrongQRType,
+          qrCodeType: data.qrCodeType,
           ticket: data.ticket,
         })
         setStats((prev) => ({
@@ -337,13 +405,13 @@ export default function ScannerPage() {
         playSound(false)
       }
 
-      // Show result longer for wrong event errors (8 seconds vs 5 seconds)
-      setTimeout(() => setScanResult(null), data.wrongEvent ? 8000 : 5000)
+      setShowResultDialog(true)
     } catch (error) {
       toast({
         title: "Validation Error",
         description: "Failed to validate ticket",
         variant: "destructive",
+        duration: 2000,
       })
     }
   }
@@ -355,6 +423,7 @@ export default function ScannerPage() {
     toast({
       title: "Manual Validation",
       description: "Manual ticket ID validation not yet implemented",
+      duration: 2000,
     })
   }
 
@@ -378,29 +447,56 @@ export default function ScannerPage() {
       <div className="mb-8">
         <h1 className="mb-2 text-3xl md:text-4xl font-bold">Ticket Scanner</h1>
         <p className="text-muted-foreground">
-          Scan attendee tickets for entry verification
+          Select event and QR type, then scan tickets
         </p>
       </div>
 
       <div className="mx-auto max-w-2xl space-y-6">
-        {/* Event Selector */}
+        {/* Event & QR Type Selector */}
         <Card>
           <CardHeader>
-            <CardTitle>Select Event</CardTitle>
+            <CardTitle>Scanner Configuration</CardTitle>
           </CardHeader>
-          <CardContent>
-            <Select value={selectedEvent} onValueChange={setSelectedEvent}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select an event" />
-              </SelectTrigger>
-              <SelectContent>
-                {events.map((event) => (
-                  <SelectItem key={event._id} value={event._id}>
-                    {event.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="event-select" className="mb-2 block">Select Event</Label>
+              <Select value={selectedEvent} onValueChange={setSelectedEvent}>
+                <SelectTrigger id="event-select">
+                  <SelectValue placeholder="Select an event" />
+                </SelectTrigger>
+                <SelectContent>
+                  {events.map((event) => (
+                    <SelectItem key={event._id} value={event._id}>
+                      {event.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="qr-type-select" className="mb-2 block">QR Type to Scan</Label>
+              <Select value={selectedQRType} onValueChange={setSelectedQRType}>
+                <SelectTrigger id="qr-type-select">
+                  <SelectValue placeholder="Select QR type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {qrTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+              <QrCode className="h-5 w-5 text-primary" />
+              <div className="text-sm">
+                <p className="font-medium">Scanning: <span className="text-primary">{qrTypes.find(t => t.value === selectedQRType)?.label}</span></p>
+                <p className="text-xs text-muted-foreground">Only {selectedQRType} QR codes will be validated</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -462,92 +558,6 @@ export default function ScannerPage() {
               </div>
             </div>
 
-            {/* Scan Result */}
-            {scanResult && (
-              <div
-                className={`rounded-lg p-4 ${
-                  scanResult.success
-                    ? scanResult.wasWrongEvent
-                      ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-900 dark:text-yellow-100 border-2 border-yellow-400"
-                      : "bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-100"
-                    : scanResult.wrongEvent
-                      ? "bg-orange-50 dark:bg-orange-900/20 text-orange-900 dark:text-orange-100 border-2 border-orange-400"
-                      : "bg-red-50 dark:bg-red-900/20 text-red-900 dark:text-red-100"
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  {scanResult.success ? (
-                    <CheckCircle className="h-6 w-6 shrink-0 mt-0.5" />
-                  ) : (
-                    <XCircle className="h-6 w-6 shrink-0 mt-0.5" />
-                  )}
-                  <div className="flex-1">
-                    <p className="font-semibold mb-1">{scanResult.message}</p>
-                    
-                    {/* Warning for previously wrong event scan */}
-                    {scanResult.wasWrongEvent && (
-                      <p className="text-sm mt-1 font-medium bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded">
-                        ⚠️ Note: This ticket was previously scanned at the wrong event. Now validated correctly.
-                      </p>
-                    )}
-                    
-                    {/* Already scanned status */}
-                    {scanResult.alreadyScanned && (
-                      <p className="text-sm mt-1 font-medium">
-                        Status: Already Scanned Ticket
-                      </p>
-                    )}
-                    
-                    {/* Wrong event details */}
-                    {scanResult.wrongEvent && scanResult.ticket && (
-                      <div className="text-sm mt-2 p-3 bg-orange-100 dark:bg-orange-900/40 rounded space-y-2">
-                        <p className="font-bold">⚠️ WRONG EVENT SCAN</p>
-                        <div className="space-y-1">
-                          <p><strong>This ticket is for:</strong></p>
-                          <div className="pl-4 space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              <span>{scanResult.ticket.correctEvent?.title}</span>
-                            </div>
-                            <p className="text-xs">📍 {scanResult.ticket.correctEvent?.location}</p>
-                            <p className="text-xs">📅 {new Date(scanResult.ticket.correctEvent?.date || "").toLocaleDateString()}</p>
-                          </div>
-                          
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Valid ticket details */}
-                    {scanResult.ticket && !scanResult.wrongEvent && (
-                      <div className="text-sm space-y-1 mt-2">
-                        {scanResult.ticket.attendee?.name && (
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            <span>{scanResult.ticket.attendee.name}</span>
-                          </div>
-                        )}
-                        {scanResult.ticket.ticketType && scanResult.ticket.price !== undefined && (
-                          <div className="flex items-center gap-2">
-                            <TicketIcon className="h-4 w-4" />
-                            <span>
-                              {scanResult.ticket.ticketType} - ৳
-                              {scanResult.ticket.price.toFixed(2)}
-                            </span>
-                          </div>
-                        )}
-                        {scanResult.ticket.event?.title && (
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            <span>{scanResult.ticket.event.title}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Scanner Controls */}
             <div className="flex gap-2">
               {!isScanning ? (
@@ -570,14 +580,23 @@ export default function ScannerPage() {
                   )}
                 </Button>
               ) : (
-                <Button
-                  onClick={stopScanner}
-                  variant="destructive"
-                  className="flex-1"
-                  size="lg"
-                >
-                  Stop Scanner
-                </Button>
+                <>
+                  <Button
+                    onClick={stopScanner}
+                    variant="destructive"
+                    className="flex-1"
+                    size="lg"
+                  >
+                    Stop Scanner
+                  </Button>
+                  <Button
+                    onClick={restartScanner}
+                    variant="outline"
+                    size="lg"
+                  >
+                    Restart
+                  </Button>
+                </>
               )}
             </div>
 
@@ -619,6 +638,77 @@ export default function ScannerPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Scan Result Dialog */}
+      <Dialog open={showResultDialog} onOpenChange={handleCloseResultDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl">
+              {scanResult?.success ? (
+                <div className="flex flex-col items-center gap-2">
+                  <CheckCircle className="h-16 w-16 text-green-500" />
+                  <span className="text-green-600">SUCCESS</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <XCircle className="h-16 w-16 text-red-500" />
+                  <span className="text-red-600">
+                    {scanResult?.alreadyScanned && "ALREADY SCANNED"}
+                    {scanResult?.wrongEvent && "WRONG EVENT"}
+                    {scanResult?.wrongQRType && "WRONG QR TYPE"}
+                    {!scanResult?.alreadyScanned && !scanResult?.wrongEvent && !scanResult?.wrongQRType && "FAILED"}
+                  </span>
+                </div>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Attendee Name */}
+            {scanResult?.ticket?.attendee?.name && (
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Attendee</p>
+                <p className="text-lg font-semibold">{scanResult.ticket.attendee.name}</p>
+              </div>
+            )}
+
+            {/* QR Type Badge */}
+            {scanResult?.qrCodeType && (
+              <div className="flex justify-center">
+                <div className={`px-4 py-2 rounded-full text-sm font-bold ${
+                  scanResult.success 
+                    ? "bg-green-500 text-white" 
+                    : "bg-red-500 text-white"
+                }`}>
+                  {scanResult.qrCodeType.toUpperCase()}
+                </div>
+              </div>
+            )}
+
+            {/* Error Details */}
+            {!scanResult?.success && (
+              <div className="text-center space-y-2">
+                {scanResult?.wrongEvent && scanResult?.ticket?.correctEvent?.title && (
+                  <p className="text-sm text-muted-foreground">
+                    This ticket is for: <span className="font-semibold">{scanResult.ticket.correctEvent.title}</span>
+                  </p>
+                )}
+                {scanResult?.wrongQRType && (
+                  <p className="text-sm text-muted-foreground">
+                    Expected: <span className="font-semibold">{selectedQRTypeRef.current.toUpperCase()}</span>
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-center">
+            <Button onClick={handleCloseResultDialog} className="px-8">
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

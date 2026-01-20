@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { qrData, qrSignature, eventId } = await req.json();
+    const { qrData, qrSignature, eventId, expectedQRType } = await req.json();
 
     // Validation
     if (!qrData || !qrSignature) {
@@ -83,13 +83,55 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // Check if ticket belongs to the correct event
+      if (eventId && booking.eventId.toString() !== eventId) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Wrong event. This ticket is for "${booking.eventTitle}"`,
+            wrongEvent: true,
+            qrCodeType: qrCodeEntry.qrCodeType,
+            ticket: {
+              id: qrCodeEntry.ticketId,
+              qrCodeType: qrCodeEntry.qrCodeType,
+              attendee: {
+                name: booking.userName,
+                email: booking.userEmail,
+                phone: booking.userPhone,
+              },
+              correctEvent: {
+                title: booking.eventTitle,
+                date: booking.eventDate,
+                location: booking.eventLocation,
+              },
+            },
+          },
+          { status: 400 }
+        );
+      }
+
+      // Check if QR type matches expected type
+      if (expectedQRType && qrCodeEntry.qrCodeType !== expectedQRType) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Wrong QR type. Expected ${expectedQRType.toUpperCase()}, got ${qrCodeEntry.qrCodeType.toUpperCase()}`,
+            wrongQRType: true,
+            qrCodeType: qrCodeEntry.qrCodeType,
+            expectedQRType: expectedQRType,
+          },
+          { status: 400 }
+        );
+      }
+
       // Check if already scanned
       if (qrCodeEntry.scanned) {
         return NextResponse.json(
           {
             success: false,
-            error: `${qrCodeType.toUpperCase()} QR code already scanned`,
+            error: `${qrCodeType.toUpperCase()} already scanned`,
             alreadyScanned: true,
+            qrCodeType: qrCodeEntry.qrCodeType,
             ticket: {
               id: qrCodeEntry.ticketId,
               qrCodeType: qrCodeEntry.qrCodeType,
@@ -117,7 +159,8 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: `${qrCodeType.toUpperCase()} QR code validated successfully`,
+        message: `${qrCodeType.toUpperCase()} validated successfully`,
+        qrCodeType: qrCodeEntry.qrCodeType,
         ticket: {
           id: qrCodeEntry.ticketId,
           qrCodeType: qrCodeEntry.qrCodeType,

@@ -78,6 +78,7 @@ export default function AttendeeManagementPage() {
         title: "Error",
         description: "Failed to load events",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsLoading(false)
@@ -113,6 +114,7 @@ export default function AttendeeManagementPage() {
         toast({
           title: "Success",
           description: "Event deleted successfully",
+          duration: 2000,
         })
         fetchEvents()
       } else {
@@ -123,6 +125,7 @@ export default function AttendeeManagementPage() {
         title: "Error",
         description: "Failed to delete event",
         variant: "destructive",
+        duration: 2000,
       })
     } finally {
       setIsDeleting(false)
