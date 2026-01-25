@@ -38,7 +38,7 @@ export default function RootLayout({
             </main>
             <Footer />
             <MobileNav />
-            {/* <PopupAdDisplay /> */}
+            <PopupAdDisplay />
           </AppLoader>
         </AuthProvider>
       </body>
