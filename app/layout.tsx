@@ -38,8 +38,8 @@ export default function RootLayout({
             </main>
             <Footer />
             <MobileNav />
-            <PopupAdDisplay />
           </AppLoader>
+          <PopupAdDisplay />
         </AuthProvider>
       </body>
     </html>
