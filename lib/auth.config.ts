@@ -106,4 +106,5 @@ export const authConfig = {
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,
 } satisfies NextAuthConfig
