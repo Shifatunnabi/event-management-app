@@ -1,15 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { usePathname } from "next/navigation"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
 
-// ⚠️ IMPORTANT: Change this value to adjust popup interval (in milliseconds)
-// Current: 180000ms = 3 minutes
-const POPUP_INTERVAL_MS = 180000 // 3 minutes
+const SESSION_KEY = "popup-ad-shown"
 
 interface PopupAd {
   _id: string
@@ -21,20 +18,22 @@ interface PopupAd {
 }
 
 export default function PopupAdDisplay() {
-  const [ads, setAds] = useState<PopupAd[]>([])
   const [currentAd, setCurrentAd] = useState<PopupAd | null>(null)
   const [isVisible, setIsVisible] = useState(false)
-  const [shownAds, setShownAds] = useState<Set<string>>(new Set())
-  const pathname = usePathname()
 
-  // Fetch active popup ads
+  // Fetch and show once per session
   useEffect(() => {
+    if (sessionStorage.getItem(SESSION_KEY)) return
+
     const fetchAds = async () => {
       try {
         const response = await fetch("/api/admin/popup-ads?activeOnly=true")
         const data = await response.json()
         if (data.success && data.ads.length > 0) {
-          setAds(data.ads)
+          const randomAd = data.ads[Math.floor(Math.random() * data.ads.length)]
+          setCurrentAd(randomAd)
+          setIsVisible(true)
+          sessionStorage.setItem(SESSION_KEY, "1")
         }
       } catch (error) {
         console.error("Error fetching popup ads:", error)
@@ -43,54 +42,6 @@ export default function PopupAdDisplay() {
 
     fetchAds()
   }, [])
-
-  // Show popup when pathname changes
-  useEffect(() => {
-    if (ads.length === 0) return
-
-    // Get a random ad that hasn't been shown yet
-    const availableAds = ads.filter(ad => !shownAds.has(ad._id))
-    
-    // If all ads have been shown, reset the shown ads set
-    if (availableAds.length === 0) {
-      setShownAds(new Set())
-      const randomAd = ads[Math.floor(Math.random() * ads.length)]
-      setCurrentAd(randomAd)
-      setIsVisible(true)
-      setShownAds(new Set([randomAd._id]))
-    } else {
-      const randomAd = availableAds[Math.floor(Math.random() * availableAds.length)]
-      setCurrentAd(randomAd)
-      setIsVisible(true)
-      setShownAds(prev => new Set([...prev, randomAd._id]))
-    }
-  }, [pathname, ads])
-
-  // Show popup at interval
-  useEffect(() => {
-    if (ads.length === 0) return
-
-    const intervalId = setInterval(() => {
-      // Get a random ad that hasn't been shown yet
-      const availableAds = ads.filter(ad => !shownAds.has(ad._id))
-      
-      // If all ads have been shown, reset the shown ads set
-      if (availableAds.length === 0) {
-        setShownAds(new Set())
-        const randomAd = ads[Math.floor(Math.random() * ads.length)]
-        setCurrentAd(randomAd)
-        setIsVisible(true)
-        setShownAds(new Set([randomAd._id]))
-      } else {
-        const randomAd = availableAds[Math.floor(Math.random() * availableAds.length)]
-        setCurrentAd(randomAd)
-        setIsVisible(true)
-        setShownAds(prev => new Set([...prev, randomAd._id]))
-      }
-    }, POPUP_INTERVAL_MS)
-
-    return () => clearInterval(intervalId)
-  }, [ads, shownAds])
 
   const handleClose = () => {
     setIsVisible(false)
