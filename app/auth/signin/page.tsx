@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { signIn } from "next-auth/react"
 import { AlertCircle, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import ForgotPasswordModal from "@/components/auth/ForgotPasswordModal"
 
 export default function SignInPage() {
   const router = useRouter()
@@ -20,6 +21,7 @@ export default function SignInPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [forgotOpen, setForgotOpen] = useState(false)
   const callbackUrl = searchParams.get("callbackUrl") || "/"
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,6 +66,8 @@ export default function SignInPage() {
   }
 
   return (
+    <>
+    <ForgotPasswordModal open={forgotOpen} onClose={() => setForgotOpen(false)} />
     <div className="flex min-h-screen items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
@@ -114,6 +118,16 @@ export default function SignInPage() {
               )}
             </Button>
 
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setForgotOpen(true)}
+                className="text-sm text-[#ff7c07] hover:text-[#e66f06] font-medium"
+              >
+                Forgot Password?
+              </button>
+            </div>
+
             <div className="text-center text-sm text-muted-foreground">
               New to EventGhor? Create an account to get started
             </div>
@@ -128,5 +142,6 @@ export default function SignInPage() {
         </CardContent>
       </Card>
     </div>
+    </>
   )
 }

@@ -9,13 +9,17 @@ export interface IUser extends Document {
   password: string
   profileImage?: string
   role: "USER" | "ORGANIZER" | "SUPER_ADMIN"
-  
+
   // Organizer-specific fields
   organizerStatus?: "PENDING" | "APPROVED" | "REJECTED"
   isBanned?: boolean
   nidNumber?: string
   organizationName?: string
-  
+
+  // Password reset fields
+  passwordResetCode?: string
+  passwordResetExpires?: Date
+
   createdAt: Date
   updatedAt: Date
 }
@@ -78,6 +82,14 @@ const UserSchema = new Schema<IUser>(
       type: String,
       trim: true,
     },
+
+    // Password reset fields
+    passwordResetCode: {
+      type: String,
+    },
+    passwordResetExpires: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
@@ -88,6 +100,12 @@ const UserSchema = new Schema<IUser>(
 UserSchema.index({ role: 1 })
 UserSchema.index({ organizerStatus: 1 })
 UserSchema.index({ isBanned: 1 })
+
+// In development, delete the cached model so schema changes (like new fields)
+// take effect immediately without requiring a full server restart.
+if (process.env.NODE_ENV !== "production" && models.User) {
+  delete (models as Record<string, unknown>).User
+}
 
 const User = models.User || model<IUser>("User", UserSchema)
 
